@@ -1,12 +1,13 @@
 #draggable {
   /* Match the image */
-  width:76;
+  width:76px;
   height:99px;
 
-  background-color:#f00;
   background-image: url("blah.png");
-  /*
+  background-repeat: no-repeat;
+  background-position: center;
   position:absolute;
+  /*
   cursor: -webkit-grab;
   */
 }
@@ -19,9 +20,21 @@
   cursor: -webkit-grabbing;
 }
 
+
 #selectable { width: 600px; height: 600px; }
+#selectable .ui-selectee { border: 5px solid transparent; }
 #selectable .ui-selecting { border: 5px solid cyan; } 
 #selectable .ui-selected { border: 5px solid blue;  }
+
+#selectable,
+#selectable .ui-selectee,
+#selectable .ui-selecting,
+#selectable .ui-selected
+{
+  box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+}
 
 .overlay
 {
