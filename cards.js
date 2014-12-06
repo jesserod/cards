@@ -6,13 +6,16 @@ $(document).ready(function() {
   var selectable = $(".selectable-container");
   // Initialize DOM
   function createDraggable(id, text) {
-    console.log(document.createElement("div"));
     var element = '<div class="{0}" id="{0}-{1}"><p>{2}</p></div>'.format("draggable", id, text);
     selectable.append(element);
+    return element;
   }
   createDraggable("A", "one");
   createDraggable("B", "two");
   createDraggable("C", "three");
+  $(".selectable-container > *").each(function(i, element) {
+    element.style.top = i * 100;
+  })
 
   var draggable = $(".draggable");
 
@@ -26,30 +29,51 @@ $(document).ready(function() {
     unselected: function(event, ui) {
       selected = false;
       $(ui.unselected).removeClass("canDrag");
-      $(ui.unselected).removeClass("dragging");
     },
 
     // Only allow top-level items inside the selectable container to be selected
     filter: "> *"
   });
 
+  var startGrabTop;
+  var startGrabLeft;
+  var currentPositions;
+
   draggable.draggable({
+    cursor: "-webkit-grabbing",
+
+    start: function(event, ui) {
+      startGrabTop = ui.position.top
+      startGrabLeft = ui.position.left
+      currentPositions = $(".ui-selected").not(ui.helper).map(function() {
+        return $(this).offset();
+      }).get();
+    },
+
     drag: function(event, ui) {
       /* Drag only if selected */
       if (!selected) {
         event.preventDefault();
         return;
       }
-      ui.helper.addClass("dragging");
+      ui.helper.removeClass("canDrag");
+      topMoved = ui.position.top - startGrabTop;
+      leftMoved = ui.position.left - startGrabLeft;
+
+      $(".ui-selected").not(ui.helper).each(function(index, element) {
+        element.style.top = currentPositions[index].top + topMoved;
+        element.style.left = currentPositions[index].left + leftMoved;
+      });
     },
+
     stop: function(event, ui) {
-      ui.helper.removeClass("dragging");
+      ui.helper.addClass("canDrag");
     },
   });
 
   /* By default, clicking on the draggable element doesn't trigger selection */
   draggable.click(function() {
-    SelectSelectableElement(selectable, draggable);
+    SelectSelectableElement(selectable, $(this));
   });
 
 
@@ -79,6 +103,10 @@ $(document).ready(function() {
 
     // trigger the mouse stop event (this will select all .ui-selecting elements, and deselect all .ui-unselecting elements)
     selectableContainer.data("ui-selectable")._mouseStop(null);
+  }
+
+  function GetDraggableElementId(element) {
+    return element.id.split("-")[1];
   }
 });
 

@@ -22,8 +22,6 @@
 }
 
 .canDrag { cursor: -webkit-grab; }
-.dragging { cursor: -webkit-grabbing; }
-
 
 .selectable-container { width: 600px; height: 600px; }
 
