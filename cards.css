@@ -1,45 +1,46 @@
-#draggable {
-  /* Match the image */
+.draggable {
+  /* Match the image size */
   width:76px;
   height:99px;
 
   background-image: url("blah.png");
   background-repeat: no-repeat;
   background-position: center;
+
   position:absolute;
-  /*
-  cursor: -webkit-grab;
-  */
+  color: yellow;
 }
 
-.canDrag {
-  cursor: -webkit-grab;
+.draggable p {
+  text-align: center;
+
+  /* Center vertically within parent */
+  margin: 0;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  position: relative;
 }
 
-.dragging {
-  cursor: -webkit-grabbing;
-}
+.canDrag { cursor: -webkit-grab; }
+.dragging { cursor: -webkit-grabbing; }
 
 
-#selectable { width: 600px; height: 600px; }
-#selectable .ui-selectee { border: 5px solid transparent; }
-#selectable .ui-selecting { border: 5px solid cyan; } 
-#selectable .ui-selected { border: 5px solid blue;  }
+.selectable-container { width: 600px; height: 600px; }
 
-#selectable,
-#selectable .ui-selectee,
-#selectable .ui-selecting,
-#selectable .ui-selected
+.selectable-container .ui-selectee { border: 5px solid transparent; }
+.selectable-container .ui-selecting { border: 5px solid cyan; } 
+.selectable-container .ui-selected { border: 5px solid blue;  }
+
+.selectable-container .ui-selectee,
+.selectable-container .ui-selecting,
+.selectable-container .ui-selected
 {
   box-sizing:border-box;
   -moz-box-sizing:border-box;
   -webkit-box-sizing:border-box;
 }
 
-.overlay
-{
-  position: relative;
-}
+.overlay { position: relative; }
 
 .overlay:before{
   position: absolute;
@@ -53,11 +54,6 @@
   display: block;
 }
 
-.blue:before {
-  background-color: rgba(0,0,255,0.5);
-}
+.blue:before { background-color: rgba(0,0,255,0.5); }
 
-.green:before {
-  background-color: rgba(0,255,0,0.5);
-}
-
+.green:before { background-color: rgba(0,255,0,0.5); }

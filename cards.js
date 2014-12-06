@@ -1,19 +1,23 @@
 $(document).ready(function() {
   var selected = false;
   var dragging = false;
-  var draggable = $("#draggable");
-  var selectable = $("#selectable");
+  var draggable = $(".draggable");
+  var selectable = $(".selectable-container");
 
   selectable.selectable({
     selected: function(event, ui) {
       selected = true;
       $(ui.selected).addClass("canDrag");
     },
+
     unselected: function(event, ui) {
       selected = false;
       $(ui.unselected).removeClass("canDrag");
       $(ui.unselected).removeClass("dragging");
-    }
+    },
+
+    // Only allow top-level items inside the selectable container to be selected
+    filter: "> *"
   });
 
   draggable.draggable({
