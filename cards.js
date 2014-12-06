@@ -65,7 +65,9 @@ $(document).ready(function() {
     },
 
     stop: function(event, ui) {
-      ui.helper.addClass("canDrag");
+      if (ui.helper.hasClass("ui-selected")) {
+        ui.helper.addClass("canDrag");
+      }
     },
   });
 
