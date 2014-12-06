@@ -1,9 +1,22 @@
 $(document).ready(function() {
+  // Global vars
   var selected = false;
   var dragging = false;
-  var draggable = $(".draggable");
-  var selectable = $(".selectable-container");
 
+  var selectable = $(".selectable-container");
+  // Initialize DOM
+  function createDraggable(id, text) {
+    console.log(document.createElement("div"));
+    var element = '<div class="{0}" id="{0}-{1}"><p>{2}</p></div>'.format("draggable", id, text);
+    selectable.append(element);
+  }
+  createDraggable("A", "one");
+  createDraggable("B", "two");
+  createDraggable("C", "three");
+
+  var draggable = $(".draggable");
+
+  // Initialize handlers etc
   selectable.selectable({
     selected: function(event, ui) {
       selected = true;
@@ -39,16 +52,6 @@ $(document).ready(function() {
     SelectSelectableElement(selectable, draggable);
   });
 
-  /*
-  draggable.click(function() {
-    selected = !selected;
-    if (selected) {
-      draggable.addClass("selected");
-    } else {
-      draggable.removeClass("selected");
-    }
-  });
-  */
 
   $(document).keypress(function(e) {
     var c = String.fromCharCode(e.which);
@@ -77,26 +80,21 @@ $(document).ready(function() {
     // trigger the mouse stop event (this will select all .ui-selecting elements, and deselect all .ui-unselecting elements)
     selectableContainer.data("ui-selectable")._mouseStop(null);
   }
-  
-
-  // Dead code
-  /*
-  draggable.mousedown(function() {
-      console.log("mousedown");
-      dragging = true;
-    });
-  $(document).mouseup(function() {
-      console.log("mouseup");
-      dragging = false;
-    });
-
-  draggable.mousemove(function(event) {
-    if (selected && dragging) {
-      console.log("ok here");
-      draggable.css('left', event.clientX - draggable.offsetWidth/2 + 'px');
-      draggable.css('top',  event.clientY - draggable.offsetHeight/2 + 'px');
-    }
-    event.preventDefault();
-  });
-  */
 });
+
+
+/* 
+ * Implement "string".format(args...) if it doesn't exist.
+ * Example: "foo {1} {0}".format("one", "two") will output "foo two one"
+ */
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
