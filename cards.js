@@ -2,6 +2,7 @@ $(document).ready(function() {
   // Global vars
   var selected = false;
   var dragging = false;
+  var shiftPressed = false;
 
   var selectable = $(".selectable-container");
   // Initialize DOM
@@ -71,9 +72,29 @@ $(document).ready(function() {
     },
   });
 
-  /* By default, clicking on the draggable element doesn't trigger selection */
-  draggable.click(function() {
-    SelectSelectableElement(selectable, $(this));
+  /*
+   * Since draggable conflicts with the click-to-select behavior of selectable,
+   * we must manually define how clicks select items.
+   */
+  $(".ui-selectee").click(function() {
+    var alreadySelected = $(".ui-selected").is(this);
+    if (alreadySelected) {
+      if (shiftPressed) {
+        // Selected already, remove from existing list of selected things
+        SelectSelectableElement(selectable, $(".ui-selected").not($(this)));
+      } else {
+        // Selected already, no shift pressed, select only this one
+        SelectSelectableElement(selectable, $(this));
+      }
+    } else {
+      if (shiftPressed) {
+        // Not selected, add to existing list of selected things
+        SelectSelectableElement(selectable, $(".ui-selected").add($(this)));
+      } else {
+        // Not selected, no shift pressed, select only this one
+        SelectSelectableElement(selectable, $(this));
+      }
+    }
   });
 
 
@@ -92,6 +113,8 @@ $(document).ready(function() {
       draggable.trigger(fakeMouseup);
     }
   });
+
+  $(document).on('keyup keydown', function(e) {shiftPressed = e.shiftKey});
 
   function SelectSelectableElement (selectableContainer, elementsToSelect)
   {
