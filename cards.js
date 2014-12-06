@@ -1,6 +1,5 @@
 $(document).ready(function() {
   // Global vars
-  var selected = false;
   var dragging = false;
   var shiftPressed = false;
 
@@ -23,12 +22,10 @@ $(document).ready(function() {
   // Initialize handlers etc
   selectable.selectable({
     selected: function(event, ui) {
-      selected = true;
       $(ui.selected).addClass("canDrag");
     },
 
     unselected: function(event, ui) {
-      selected = false;
       $(ui.unselected).removeClass("canDrag");
     },
 
@@ -53,7 +50,7 @@ $(document).ready(function() {
 
     drag: function(event, ui) {
       /* Drag only if selected */
-      if (!selected) {
+      if (!ui.helper.hasClass("ui-selected")) {
         event.preventDefault();
         return;
       }
