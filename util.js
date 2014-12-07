@@ -27,3 +27,8 @@ Array.max = function(array){
   return Math.max.apply(Math, array);
 };
 
+// Function to get the average value in Array
+// Usage: Array.avg(arr)
+Array.avg = function(array){
+  return array.reduce(function(total, val) {return total + val}, 0) / array.length;
+};
