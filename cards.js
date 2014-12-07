@@ -3,11 +3,11 @@ $(document).ready(function() {
   var dragging = false;
   var shiftPressed = false;
 
-  var selectable = $(".selectable-container");
+  var selectableContainer = $(".selectable-container");
   // Initialize DOM
   function createDraggable(id, text, zIndex) {
     var element = '<div class="{0}" id="{0}-{1}" style="z-index: {3}; position: absolute"><p>{2}</p></div>'.format("draggable", id, text, zIndex);
-    selectable.append(element);
+    selectableContainer.append(element);
     return element;
   }
   createDraggable("A", "one", 0);
@@ -16,14 +16,14 @@ $(document).ready(function() {
   createDraggable("D", "four", 3);
   createDraggable("E", "five", 4);
   createDraggable("F", "six", 5);
-  $(".selectable-container > *").each(function(i, element) {
+  $("> *", selectableContainer).each(function(i, element) {
     element.style.top = i * 60;
   })
 
   var draggable = $(".draggable");
 
   // Initialize handlers etc
-  selectable.selectable({
+  selectableContainer.selectable({
     selected: function(event, ui) {
       $(ui.selected).addClass("canDrag");
     },
@@ -44,6 +44,9 @@ $(document).ready(function() {
     cursor: "-webkit-grabbing",
 
     start: function(event, ui) {
+      if (!IsSelected(ui.helper)) {
+        ui.helper.trigger("click");
+      }
       startGrabTop = ui.position.top
       startGrabLeft = ui.position.left
       currentPositions = GetSelected().not(ui.helper).map(function() {
@@ -53,7 +56,7 @@ $(document).ready(function() {
 
     drag: function(event, ui) {
       /* Drag only if selected */
-      if (!ui.helper.hasClass("ui-selected")) {
+      if (!IsSelected(ui.helper)) {
         event.preventDefault();
         return;
       }
@@ -68,7 +71,7 @@ $(document).ready(function() {
     },
 
     stop: function(event, ui) {
-      if (ui.helper.hasClass("ui-selected")) {
+      if (IsSelected(ui.helper)) {
         ui.helper.addClass("canDrag");
       }
     },
@@ -83,18 +86,18 @@ $(document).ready(function() {
     if (alreadySelected) {
       if (shiftPressed) {
         // Selected already, remove from existing list of selected things
-        SelectSelectableElement(selectable, GetSelected().not($(this)));
+        SelectSelectableElement(selectableContainer, GetSelected().not($(this)));
       } else {
         // Selected already, no shift pressed, select only this one
-        SelectSelectableElement(selectable, $(this));
+        SelectSelectableElement(selectableContainer, $(this));
       }
     } else {
       if (shiftPressed) {
         // Not selected, add to existing list of selected things
-        SelectSelectableElement(selectable, GetSelected().add($(this)));
+        SelectSelectableElement(selectableContainer, GetSelected().add($(this)));
       } else {
         // Not selected, no shift pressed, select only this one
-        SelectSelectableElement(selectable, $(this));
+        SelectSelectableElement(selectableContainer, $(this));
       }
     }
   });
@@ -121,24 +124,39 @@ $(document).ready(function() {
 
   $(document).on('keyup keydown', function(e) {shiftPressed = e.shiftKey});
 
-  function SelectSelectableElement (selectableContainer, elementsToSelect)
+  /** Container is a .selectable container, elementsToSelect should be in it */
+  function SelectSelectableElement(container, elementsToSelect)
   {
     // add unselecting class to all elements in the styleboard canvas except the ones to select
-    $(".ui-selected", selectableContainer).not(elementsToSelect).removeClass("ui-selected").addClass("ui-unselecting");
+    $(".ui-selected", container).not(elementsToSelect).removeClass("ui-selected").addClass("ui-unselecting");
     
     // add ui-selecting class to the elements to select
     $(elementsToSelect).not(".ui-selected").addClass("ui-selecting");
 
     // trigger the mouse stop event (this will select all .ui-selecting elements, and deselect all .ui-unselecting elements)
-    selectableContainer.data("ui-selectable")._mouseStop(null);
+    container.data("ui-selectable")._mouseStop(null);
   }
 
   function GetDraggableElementId(element) {
     return element.id.split("-")[1];
   }
 
-  function GetSelected() {
-    return $(".ui-selected");
+  function GetSelected(container) {
+    if (container == null) {
+      container = selectableContainer
+    }
+    return $(".ui-selected", container);
+  }
+
+  function GetSelecting(container) {
+    if (container == null) {
+      container = selectableContainer
+    }
+    return $(".ui-selected", container);
+  }
+
+  function IsSelected(element) {
+    return $(element).hasClass("ui-selected");
   }
 
   function OrganizeDeck() {
@@ -147,12 +165,11 @@ $(document).ready(function() {
     var baseTop = Math.floor(Array.avg(tops));
     var baseLeft = Math.floor(Array.avg(lefts));
     var offsetPerGroup = 2;
-    var cardsPerGroup = 2;
+    var cardsPerGroup = 3;
     // Sort by z-index
     var inOrder = GetSelected().toArray().sort(function(x,y) {return $(x).zIndex() - $(y).zIndex()});
     for (var i = 0; i < inOrder.length; i++) {
       var groupIndex = Math.floor((i-1)/cardsPerGroup) + 1;
-      console.log(groupIndex);
       var offset = groupIndex * offsetPerGroup;
       inOrder[i].style.top = baseTop + offset;
       inOrder[i].style.left = baseLeft + offset;

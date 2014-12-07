@@ -9,6 +9,7 @@
 
   position:absolute;
   color: yellow;
+  cursor: pointer;
 }
 
 .draggable {
