@@ -5,6 +5,7 @@ $(document).ready(function() {
   // To keep track of items at the start of a shift-lasso so we can de-select
   // items en masse, and add new items to the selection en masse
   var selectedAtShiftLassoStart;
+  var animationMs = 100;
 
   var selectableContainer = $(".selectable-container");
   // Initialize DOM
@@ -227,8 +228,9 @@ $(document).ready(function() {
     for (var i = 0; i < inOrder.length; i++) {
       var groupIndex = Math.floor((i-1)/cardsPerGroup) + 1;
       var offset = groupIndex * offsetPerGroup;
-      inOrder[i].style.top = baseTop + offset;
-      inOrder[i].style.left = baseLeft + offset;
+
+      $(inOrder[i]).animate({top: baseTop + offset, left: baseLeft + offset},
+          {duration: animationMs});
     }
   }
 
