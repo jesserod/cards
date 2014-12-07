@@ -8,21 +8,27 @@ $(document).ready(function() {
   var animationMs = 100;
 
   var selectableContainer = $(".selectable-container");
+  var allCards = {};
   // Initialize DOM
-  function createDraggable(id, text, zIndex) {
-    var element = '<div class="{0}" id="{0}-{1}" style="z-index: {3}; position: absolute"><p>{2}</p></div>'.format("draggable", id, text, zIndex);
-    selectableContainer.append(element);
-    return element;
+  function AddCard(id, text, index) {
+    var card = CreateCard({
+      id: id,
+      top: index * 60,
+      left: 0,
+      "z-index": index,
+      text: text,
+      backImage: "demo-card-back.png",
+      frontImage: "demo-card-front.png",
+    });
+    selectableContainer.append(card.element);
+    allCards[id] = card;
   }
-  createDraggable("A", "one", 0);
-  createDraggable("B", "two", 1);
-  createDraggable("C", "three", 2);
-  createDraggable("D", "four", 3);
-  createDraggable("E", "five", 4);
-  createDraggable("F", "six", 5);
-  $("> *", selectableContainer).each(function(i, element) {
-    element.style.top = i * 60;
-  })
+  AddCard("A", "one", 0);
+  AddCard("B", "two", 1);
+  AddCard("C", "three", 2);
+  AddCard("D", "four", 3);
+  AddCard("E", "five", 4);
+  AddCard("F", "six", 5);
 
   var draggable = $(".draggable");
 
@@ -154,11 +160,15 @@ $(document).ready(function() {
     var validKey = true;
     if (c == "t") {
       console.log("Taking");
-    } else if (c == "f") {
-      console.log("Flip");
+    } else if (c == "u") {
+      console.log("Flip Up");
+      FlipSelectedCards(true);
     } else if (c == "d") {
-      OrganizeDeck();
-      console.log("Deck");
+      console.log("Flip Down");
+      FlipSelectedCards(false);
+    } else if (c == "g") {
+      GroupCards();
+      console.log("Group");
     } else {
       validKey = false;
     }
@@ -216,7 +226,7 @@ $(document).ready(function() {
     return $(element).hasClass("ui-selecting");
   }
 
-  function OrganizeDeck() {
+  function GroupCards() {
     var tops = GetSelected().map(function() {return $(this).offset().top}).get();
     var lefts = GetSelected().map(function() {return $(this).offset().left}).get();
     var baseTop = Math.floor(Array.avg(tops));
@@ -260,5 +270,58 @@ $(document).ready(function() {
     for (var i = 0; i < selected.length; i++) {
       $(selected[i]).zIndex(maxOthers + 1 + origZOffsets[i]);
     }
+  }
+
+  function CreateCard(values) {
+    var card = {}
+
+    var attrKeys = ["id"];
+    var cssKeys = ["z-index", "top", "left"];
+    var otherKeys = ["frontImage", "backImage", "text"];
+
+    var attrMap = {}
+    var cssMap = {}
+    var otherMap = {}
+
+    attrKeys.forEach(function(key) {
+      card[key] = values[key];
+      attrMap[key] = values[key];
+    });
+    cssKeys.forEach(function(key) {
+      card[key] = values[key];
+      cssMap[key] = values[key];
+    });
+
+    otherKeys.forEach(function(key) {
+      card[key] = values[key];
+      otherMap[key] = values[key];
+    });
+
+    cssMap["background-image"] = 'url("' + card.frontImage + '")';
+    cssMap["position"] = "absolute";
+    card.element = $("<div></div>")
+        .attr(attrMap)
+        .css(cssMap)
+        .addClass("draggable");
+    card.element.append($("<p></p>").text(card.text));
+
+    return card;
+  }
+
+  function FlipSelectedCards(front) {
+    GetSelected().each(function(index, element) {
+      var card = allCards[element.id];
+      if (card != null) {
+        FlipCard(card, front);
+      }
+    });
+  }
+
+  function FlipCard(card, front) {
+    var url = card.frontImage;
+    if (!front) {
+      url = card.backImage;
+    }
+    $(card.element).css({"background-image": "url(" + url + ")"});
   }
 });

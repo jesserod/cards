@@ -1,9 +1,13 @@
+body {
+  padding: 0px;
+}
+
 .draggable {
   /* Match the image size */
   width:76px;
   height:99px;
 
-  background-image: url("blah.png");
+  /* background-image: url("demo-card-front.png"); */
   background-repeat: no-repeat;
   background-position: center;
 
