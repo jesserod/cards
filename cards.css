@@ -31,7 +31,8 @@
 .selectable-container { width: 600px; height: 600px; }
 
 .selectable-container .ui-selectee { border: 1px solid grey; }
-.selectable-container .ui-selecting { border: 5px solid cyan; } 
+/* Make selecting and selected same color to avoid confusion with lasso */
+.selectable-container .ui-selecting { border: 5px solid blue; } 
 .selectable-container .ui-selected { border: 5px solid blue;  }
 
 .selectable-container .ui-selectee,
