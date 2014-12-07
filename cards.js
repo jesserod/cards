@@ -83,14 +83,20 @@ $(document).ready(function() {
     cursor: "-webkit-grabbing",
 
     start: function(event, ui) {
+      // If an item is not selected yet a drag event starts on it,
+      // pretend it was clicked prior to dragging
       if (!IsSelected(ui.helper)) {
         ui.helper.trigger("click");
       }
+      selected = GetSelected();
       startGrabTop = ui.position.top
       startGrabLeft = ui.position.left
-      currentPositions = GetSelected().not(ui.helper).map(function() {
+      currentPositions = selected.not(ui.helper).map(function() {
         return $(this).offset();
       }).get();
+
+      // When we drag things, they should float above others
+      BringToFront(selected, GetSelectees().not(selected));
     },
 
     drag: function(event, ui) {
@@ -194,6 +200,13 @@ $(document).ready(function() {
     return $(".ui-selecting", container);
   }
 
+  function GetSelectees(container) {
+    if (container == null) {
+      container = selectableContainer
+    }
+    return $(".ui-selectee", container);
+  }
+
   function IsSelected(element) {
     return $(element).hasClass("ui-selected");
   }
@@ -216,6 +229,34 @@ $(document).ready(function() {
       var offset = groupIndex * offsetPerGroup;
       inOrder[i].style.top = baseTop + offset;
       inOrder[i].style.left = baseLeft + offset;
+    }
+  }
+
+  function GetZIndices(elements) {
+    return $(elements).map(function() {
+      return $(this).zIndex();
+    }).get();
+  }
+
+  /*
+   * Bring the given elements to the foreground such that every item
+   * in elements has a higher z-index than the highest z-index in others.
+   * The relative offsets of z-index within elements will be preserved.
+   */
+  function BringToFront(elements, others) {
+    if (elements == null || others == null || elements.length == 0 || others.length == 0) {
+      return;
+    }
+    elements = $(elements).toArray(); // Preserve order by converting to array (if not already one)
+    var origZIndices = GetZIndices(elements);
+    var minOrig = Array.min(origZIndices);
+    var origZOffsets = origZIndices.map(function(x) {return x - minOrig});
+
+    var otherZIndices = GetZIndices($(others).not(elements));
+    var maxOthers = Array.max(otherZIndices);
+
+    for (var i = 0; i < selected.length; i++) {
+      $(selected[i]).zIndex(maxOthers + 1 + origZOffsets[i]);
     }
   }
 });

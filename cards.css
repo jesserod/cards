@@ -28,7 +28,7 @@
 
 .canDrag { cursor: -webkit-grab; }
 
-.selectable-container { width: 600px; height: 600px; }
+.selectable-container { width: 600px; height: 600px; border: 1px solid black;}
 
 .selectable-container .ui-selectee { border: 1px solid grey; }
 /* Make selecting and selected same color to avoid confusion with lasso */

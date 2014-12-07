@@ -23,8 +23,8 @@ Array.max = function(array){
 
 // Function to get the Max value in Array
 // Usage: Array.min(arr)
-Array.max = function(array){
-  return Math.max.apply(Math, array);
+Array.min = function(array){
+  return Math.min.apply(Math, array);
 };
 
 // Function to get the average value in Array
