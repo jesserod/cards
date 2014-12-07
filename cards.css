@@ -11,6 +11,10 @@
   color: yellow;
 }
 
+.draggable {
+  position: absolute;
+}
+
 .draggable p {
   text-align: center;
 
@@ -25,7 +29,7 @@
 
 .selectable-container { width: 600px; height: 600px; }
 
-.selectable-container .ui-selectee { border: 5px solid transparent; }
+.selectable-container .ui-selectee { border: 1px solid grey; }
 .selectable-container .ui-selecting { border: 5px solid cyan; } 
 .selectable-container .ui-selected { border: 5px solid blue;  }
 
