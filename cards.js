@@ -2,6 +2,9 @@ $(document).ready(function() {
   // Global vars
   var dragging = false;
   var shiftPressed = false;
+  // To keep track of items at the start of a shift-lasso so we can de-select
+  // items en masse, and add new items to the selection en masse
+  var selectedAtShiftLassoStart;
 
   var selectableContainer = $(".selectable-container");
   // Initialize DOM
@@ -24,12 +27,48 @@ $(document).ready(function() {
 
   // Initialize handlers etc
   selectableContainer.selectable({
+    start: function(event, ui) {
+      // Keep track of what was currently selected when a shift-lasso drag started
+      if (shiftPressed) {
+        selectedAtShiftLassoStart = GetSelected();
+      }
+    },
+
+    selecting: function(event, ui) {
+      // Invert logic for shift-drag select
+      if ($(selectedAtShiftLassoStart).is(ui.selecting)) {
+        $(ui.selecting).removeClass("ui-selected");
+        $(ui.selecting).removeClass("ui-selecting");
+        $(ui.selecting).removeClass("canDrag");
+        return;
+      }
+    },
+
     selected: function(event, ui) {
+      // Invert logic for shift-drag select
+      if ($(selectedAtShiftLassoStart).is(ui.selected)) {
+        $(ui.selected).removeClass("ui-selected");
+        $(ui.selected).removeClass("canDrag");
+        return;
+      }
       $(ui.selected).addClass("canDrag");
+    },
+
+    unselecting: function(event, ui) {
+      // Retain selected items during shift drag
+      if ($(selectedAtShiftLassoStart).is(ui.unselecting)) {
+        $(ui.unselecting).addClass("ui-selected");
+        return;
+      }
     },
 
     unselected: function(event, ui) {
       $(ui.unselected).removeClass("canDrag");
+    },
+
+    stop: function(event, ui) {
+      // Lasso is over, what was selected at start is now irrelevant
+      selectedAtShiftLassoStart = null;
     },
 
     // Only allow top-level items inside the selectable container to be selected
@@ -152,11 +191,15 @@ $(document).ready(function() {
     if (container == null) {
       container = selectableContainer
     }
-    return $(".ui-selected", container);
+    return $(".ui-selecting", container);
   }
 
   function IsSelected(element) {
     return $(element).hasClass("ui-selected");
+  }
+
+  function IsSelecting(element) {
+    return $(element).hasClass("ui-selecting");
   }
 
   function OrganizeDeck() {
