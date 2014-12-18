@@ -1,0 +1,10 @@
+{
+  "name": "cards-server",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "3.3.4",
+    "nodemon": "1.2.1",
+    "mongojs": "0.18.0"
+  }
+}
