@@ -1,26 +1,104 @@
 // Default host/port is localhost:27017 (default port for mongodb).
 // So, this path is just the database name to use
 var databaseUrl = "cards-dev"; // "username:password@example.com/mydb"
-var collections = ['states']
+var collections = ['boards', 'meta', 'cards']
 var mongojs = require("mongojs")
 var db = mongojs(databaseUrl, collections);
 var express = require('express');
 var app = express();
+var Card = require('./card');
+var Board = require('./board');
 
 // The root now serves stuff in the client dir as if it were the root
 app.use(express.static(__dirname + '/client'));
 
-app.get('/state/:id', function (req, res) {
-  db.states.findOne({id: req.params.id}, function(err, state) {
-    var output = {};
-    if (err || !state) {
-      console.log("Not found");
-    } else {
-      output = state;
+// Creates a new game with some dummy data
+app.get('/newboard', function (req, res) {
+  var key = "board.latestId";
+  getMeta(key, 0, function(boardId) {
+    if (!boardId) {
+      res.send("Couldn't create new board");
+      return;
     }
-    res.json(output);
+    boardId.value += 1;
+    db.meta.save(boardId);
+    var board = Board.create(boardId.value);
+    board.addCard(1, 0, 0);
+    board.addCard(1, 60, 0);
+    board.addCard(1, 120, 0);
+    db.boards.insert(board);
+    res.send("" + board.id);
   });
-})
+});
+
+// Initalizes the database
+app.get('/initdb', function(req, res) {
+  res.send("Initializing DB");
+  var bulk = db.cards.initializeOrderedBulkOp();
+  bulk.find({}).remove()
+  bulk.insert(Card.create(1));
+  bulk.execute(function(err, results) {
+    if (!err) {
+      console.log("Cards seeded");
+    } else {
+      console.log("Error seeding cards: " + err);
+    }
+  });
+});
+
+// Prints JSON version of one item (if ID is specified) or a whole collection
+app.get('/show/:collection/:id?', function(req, res) {
+  var collection = db[req.params.collection]
+  if (!collection) {
+    res.send("Collection not found: " + req.params.collection);
+    return;
+  }
+  var filter = {}
+  if (req.params.id) {
+    filter = {id: parseInt(req.params.id)};
+  }
+  collection.find(filter, function(err, results) {
+    if (err) {
+      res.json(err);
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+// Removes an item (if ID is specified) or a whole collection
+app.get('/drop/:collection/:id?', function(req, res) {
+  var collection = db[req.params.collection]
+  if (!collection) {
+    res.send("Collection not found: " + req.params.collection);
+    return;
+  }
+  var bulk = collection.initializeOrderedBulkOp();
+  var filter = {}
+  if (req.params.id) {
+    filter = {id: parseInt(req.params.id)};
+  }
+  bulk.find(filter).remove();
+  bulk.execute(function(err, results) {
+    if (err) {
+      res.json(err);
+    } else {
+      res.json(results);
+    }
+  })
+});
+
+function getMeta(key, defaultValue, callback) {
+  db.meta.findOne({key: key}, function(err, kv) {
+    if (err) {
+      callback(null);
+    } else if (!kv) {
+      callback({key: key, value: defaultValue});
+    } else {
+      callback(kv);
+    }
+  });
+}
 
 /*
 
