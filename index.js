@@ -53,17 +53,18 @@ app.get('/show/:collection/:id?', function(req, res) {
     res.send("Collection not found: " + req.params.collection);
     return;
   }
-  var filter = {}
-  if (req.params.id) {
-    filter = {id: parseInt(req.params.id)};
-  }
-  collection.find(filter, function(err, results) {
+  var callback = function(err, result) {
     if (err) {
       res.json(err);
     } else {
-      res.json(results);
+      res.json(result);
     }
-  });
+  }
+  if (req.params.id) {
+    collection.findOne({id: parseInt(req.params.id)}, callback);
+  } else {
+    collection.find({}, callback);
+  }
 });
 
 // Removes an item (if ID is specified) or a whole collection
@@ -73,19 +74,17 @@ app.get('/drop/:collection/:id?', function(req, res) {
     res.send("Collection not found: " + req.params.collection);
     return;
   }
-  var bulk = collection.initializeOrderedBulkOp();
   var filter = {}
   if (req.params.id) {
     filter = {id: parseInt(req.params.id)};
   }
-  bulk.find(filter).remove();
-  bulk.execute(function(err, results) {
+  collection.remove(filter, function(err, results) {
     if (err) {
       res.json(err);
     } else {
       res.json(results);
     }
-  })
+  });
 });
 
 function getMeta(key, defaultValue, callback) {
@@ -99,74 +98,6 @@ function getMeta(key, defaultValue, callback) {
     }
   });
 }
-
-/*
-
-app.get('/users', function (req, res) {
-  // res.send('Got a GET request');
-  var resp = {bar: "asdf"}
-  db.users.find({}, function(err, users) {
-    if( err || !users) console.log("No users found");
-    else users.forEach( function(maleUser) {
-      resp.bar = resp.bar + JSON.stringify(maleUser);
-    } );
-    console.log(resp.bar);
-    res.send(resp.bar);
-  });
-})
-
-app.get('/getuser/:id', function (req, res) {
-  res.send("Finding with id " + req.params.id)
-  db.users.find({id: req.params.id}, function(err, users) {
-    console.log("here... " + req.params.id)
-    console.log(users);
-    if( err || !users || users.length == 0) {
-      res.send("No matching users found");
-    }
-    else {
-    console.log("foreach");
-    users.forEach( function(maleUser) {
-      res.send(maleUser);
-    } );
-    console.log("done foreach");
-    }
-  });
-})
-
-// accept POST (create) request
-// app.post('/createuser', function (req, res) {
-app.get('/createuser/:id', function (req, res) {
-  res.send('Got a POST request');
-  db.users.save({id: req.params.id, email: "srirangan@gmail.com", password: "iLoveMongo", sex: "male"}, function(err, saved) {
-    if( err || !saved ) console.log("User not saved");
-    else console.log("User saved");
-  });
-
-})
-
-// accept PUT (update) request
-// app.put('/update', function (req, res) {
-app.get('/update', function (req, res) {
-  res.send('Got a PUT request at /user');
-  db.users.update({email: "srirangan@gmail.com"}, {$set: {password: "iReallyLoveMongo"}}, {multi: true}, function(err, updated) {
-    if( err || !updated ) console.log("User not updated");
-      else console.log("User updated");
-  });
-
-})
-
-// accept DELETE request at /user
-// app.delete('/deleteuser', function (req, res) {
-app.get('/deleteuser', function (req, res) {
-  res.send('Got a DELETE request at /user');
-  db.users.find({sex: "male"}, function(err, users) {
-    if( err || !users) console.log("No male users found");
-    else users.forEach( function(maleUser) {
-      console.log(maleUser);
-    });
-  }).remove();
-})
-*/
 
 var server = app.listen(process.env.port || 3000, function () {
   var host = server.address().address
