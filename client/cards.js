@@ -1,5 +1,7 @@
+var BOARD_ID = 1;
+
 $(document).ready(function() {
-$.ajax({url: "/show/boards/1", success: function(board) {
+$.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   // Global vars
   var dragging = false;
   var shiftPressed = false;
@@ -12,16 +14,16 @@ $.ajax({url: "/show/boards/1", success: function(board) {
   var allCards = {};
 
   // Initialize DOM
-  for (var i = 0; i < board.cards.length; i++) {
-    var id = "id" + i;
+  for (var cardId in board.cards) {
+    var id = "id" + cardId;
     var card = CreateCard({
       id: id,
-      top: board.cards[i].top,
-      left: board.cards[i].left,
-      "z-index": i,
-      text: "text" + i,
-      backImage: board.cards[i].card.backImage,
-      frontImage: board.cards[i].card.frontImage,
+      top: board.cards[cardId].top,
+      left: board.cards[cardId].left,
+      "z-index": cardId,
+      text: "text" + cardId,
+      backImage: board.cards[cardId].card.backImage,
+      frontImage: board.cards[cardId].card.frontImage,
     });
     selectableContainer.append(card.element);
     allCards[id] = card;

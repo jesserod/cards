@@ -54,6 +54,10 @@ app.get('/initdb', function(req, res) {
   });
 });
 
+app.post('/updateboard/:id', function(req, res) {
+  app.pos
+});
+
 // Prints JSON version of one item (if ID is specified) or a whole collection
 app.get('/show/:collection/:id?', function(req, res) {
   var collection = db[req.params.collection]
