@@ -9,6 +9,8 @@ var app = express();
 var Card = require('./card');
 var Board = require('./board');
 
+// Allow retriving params from post requests
+app.use( express.bodyParser() )
 // The root now serves stuff in the client dir as if it were the root
 app.use(express.static(__dirname + '/client'));
 
@@ -29,9 +31,9 @@ app.get('/newboard', function (req, res) {
       } else {
         delete card._id;
         console.log(JSON.stringify(card));
-        board.addCard(card, 0, 0);
-        board.addCard(card, 60, 0);
-        board.addCard(card, 120, 0);
+        board.addCard(card, 0, 0, true);
+        board.addCard(card, 60, 0, true);
+        board.addCard(card, 120, 0, false);
         db.boards.insert(board);
         res.send("" + board.id);
       }
@@ -55,7 +57,7 @@ app.get('/initdb', function(req, res) {
 });
 
 app.post('/updateboard/:id', function(req, res) {
-  app.pos
+  console.log(req.body);
 });
 
 // Prints JSON version of one item (if ID is specified) or a whole collection

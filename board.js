@@ -1,11 +1,21 @@
 module.exports = {
   create: function(boardId) {
     cards = {}
+    numCards = 0;
     return {
       id: boardId,
       cards: cards,
-      addCard: function(card, top, left) {
-        cards[cards.length] = {card: card, top: top, left: left};
+      numCards: numCards,
+
+      addCard: function(card, top, left, frontUp) {
+        cards[numCards] = {
+          card: card,
+          top: top,
+          left: left,
+          zIndex: numCards,
+          frontUp: frontUp,
+        };
+        numCards++;
       } 
     }
   }

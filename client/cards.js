@@ -2,6 +2,8 @@ var BOARD_ID = 1;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
+  console.log("BOARD LOADED:");
+  console.log(board);
   // Global vars
   var dragging = false;
   var shiftPressed = false;
@@ -14,19 +16,24 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   var allCards = {};
 
   // Initialize DOM
+  // cardId: Which card on the board.  Distinct from the ID of the card itself...
+  // Maybe the ID for the card itself should be card UID
   for (var cardId in board.cards) {
-    var id = "id" + cardId;
-    var card = CreateCard({
-      id: id,
-      top: board.cards[cardId].top,
-      left: board.cards[cardId].left,
-      "z-index": cardId,
+    var domId = "card" + cardId;
+    var card = board.cards[cardId]
+    var clientCard = CreateCard({
+      id: domId,
+      cardId: cardId,
+      top: card.top,
+      left: card.left,
+      "z-index": card.zIndex,
       text: "text" + cardId,
-      backImage: board.cards[cardId].card.backImage,
-      frontImage: board.cards[cardId].card.frontImage,
+      backImage: card.card.backImage,
+      frontImage: card.card.frontImage,
+      frontUp: card.frontUp,
     });
-    selectableContainer.append(card.element);
-    allCards[id] = card;
+    selectableContainer.append(clientCard.element);
+    allCards[domId] = clientCard;
   }
   var draggable = $(".draggable");
 
@@ -173,6 +180,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     if (validKey) {
       var fakeMouseup = $.Event( "mouseup", { which: 1 } );
       draggable.trigger(fakeMouseup);
+      SendBoardUpdate();
     }
   });
 
@@ -266,7 +274,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var maxOthers = Array.max(otherZIndices);
 
     for (var i = 0; i < selected.length; i++) {
-      $(selected[i]).zIndex(maxOthers + 1 + origZOffsets[i]);
+      var zIndex = maxOthers + 1 + origZOffsets[i];
+      $(selected[i]).zIndex(zIndex);
+      allCards[elements[i].id]["z-index"] = zIndex;
     }
   }
 
@@ -275,7 +285,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "text"];
+    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardId"];
 
     var attrMap = {}
     var cssMap = {}
@@ -295,7 +305,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       otherMap[key] = values[key];
     });
 
-    cssMap["background-image"] = 'url("' + card.frontImage + '")';
+    var imageUrl;
+    if (card.frontUp) {
+      imageUrl = card.frontImage;
+    } else {
+      imageUrl = card.backImage
+    }
+
+    cssMap["background-image"] = 'url("' + imageUrl + '")';
     cssMap["position"] = "absolute";
     card.element = $("<div></div>")
         .attr(attrMap)
@@ -306,21 +323,38 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return card;
   }
 
-  function FlipSelectedCards(front) {
+  function FlipSelectedCards(frontUp) {
     GetSelected().each(function(index, element) {
       var card = allCards[element.id];
       if (card != null) {
-        FlipCard(card, front);
+        FlipCard(card, frontUp);
       }
     });
   }
 
-  function FlipCard(card, front) {
-    var url = card.frontImage;
-    if (!front) {
+  function FlipCard(card, frontUp) {
+    var url;
+    card.frontUp = frontUp;
+    if (frontUp) {
+      url = card.frontImage;
+    } else {
       url = card.backImage;
     }
     $(card.element).css({"background-image": "url(" + url + ")"});
+  }
+
+  function SendBoardUpdate() {
+    var data = {}
+    for (var domId in allCards) {
+      var card = allCards[domId];
+      data[card.cardId] = {
+        frontUp: card.frontUp,
+        top: card.element.offset().top,
+        left: card.element.offset().left,
+        zIndex: card["z-index"],
+      }
+    }
+    $.post("/updateboard/" + BOARD_ID, data);
   }
 }});
 });
