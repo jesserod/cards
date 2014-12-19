@@ -23,11 +23,19 @@ app.get('/newboard', function (req, res) {
     boardId.value += 1;
     db.meta.save(boardId);
     var board = Board.create(boardId.value);
-    board.addCard(1, 0, 0);
-    board.addCard(1, 60, 0);
-    board.addCard(1, 120, 0);
-    db.boards.insert(board);
-    res.send("" + board.id);
+    db.cards.findOne({id: 1}, function(err, card) {
+      if (err) {
+        res.send(err);
+      } else {
+        delete card._id;
+        console.log(JSON.stringify(card));
+        board.addCard(card, 0, 0);
+        board.addCard(card, 60, 0);
+        board.addCard(card, 120, 0);
+        db.boards.insert(board);
+        res.send("" + board.id);
+      }
+    });
   });
 });
 

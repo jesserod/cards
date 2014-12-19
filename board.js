@@ -4,8 +4,8 @@ module.exports = {
     return {
       id: boardId,
       cards: cards,
-      addCard: function(cardId, top, left) {
-        cards.push({cardId: cardId, top: top, left: left});
+      addCard: function(card, top, left) {
+        cards.push({card: card, top: top, left: left});
       } 
     }
   }
