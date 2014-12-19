@@ -58,6 +58,7 @@ app.get('/initdb', function(req, res) {
 
 app.post('/updateboard/:id', function(req, res) {
   console.log(req.body);
+  res.json({});
 });
 
 // Prints JSON version of one item (if ID is specified) or a whole collection
