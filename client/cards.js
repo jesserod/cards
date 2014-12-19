@@ -1,4 +1,5 @@
 $(document).ready(function() {
+$.ajax({url: "/show/boards/1", success: function(board) {
   // Global vars
   var dragging = false;
   var shiftPressed = false;
@@ -9,27 +10,22 @@ $(document).ready(function() {
 
   var selectableContainer = $(".selectable-container");
   var allCards = {};
+
   // Initialize DOM
-  function AddCard(id, text, index) {
+  for (var i = 0; i < board.cards.length; i++) {
+    var id = "id" + i;
     var card = CreateCard({
       id: id,
-      top: index * 60,
-      left: 0,
-      "z-index": index,
-      text: text,
-      backImage: "demo-card-back.png",
-      frontImage: "demo-card-front.png",
+      top: board.cards[i].top,
+      left: board.cards[i].left,
+      "z-index": i,
+      text: "text" + i,
+      backImage: board.cards[i].card.backImage,
+      frontImage: board.cards[i].card.frontImage,
     });
     selectableContainer.append(card.element);
     allCards[id] = card;
   }
-  AddCard("A", "one", 0);
-  AddCard("B", "two", 1);
-  AddCard("C", "three", 2);
-  AddCard("D", "four", 3);
-  AddCard("E", "five", 4);
-  AddCard("F", "six", 5);
-
   var draggable = $(".draggable");
 
   // Initialize handlers etc
@@ -324,4 +320,5 @@ $(document).ready(function() {
     }
     $(card.element).css({"background-image": "url(" + url + ")"});
   }
+}});
 });
