@@ -1,5 +1,5 @@
 // Default host/port is localhost:27017 (default port for mongodb).
-// So, this path is just the database name to use.
+// So, this path is just the database name to use..
 var databaseUrl = "cards-dev"; // "username:password@example.com/mydb"
 var collections = ['boards', 'meta', 'cards']
 var mongojs = require("mongojs")
