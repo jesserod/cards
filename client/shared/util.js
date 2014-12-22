@@ -1,4 +1,4 @@
-
+(function exports(){
 /* 
  * Implement "string".format(args...) if it doesn't exist.
  * Example: "foo {1} {0}".format("one", "two") will output "foo two one"
@@ -32,3 +32,4 @@ Array.min = function(array){
 Array.avg = function(array){
   return array.reduce(function(total, val) {return total + val}, 0) / array.length;
 };
+})(typeof exports === 'undefined'? this['util']={}: exports);
