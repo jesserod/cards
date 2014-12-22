@@ -1,4 +1,5 @@
 var BOARD_ID = 1;
+var ANIMATION_MS = 100;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -10,7 +11,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   // To keep track of items at the start of a shift-lasso so we can de-select
   // items en masse, and add new items to the selection en masse
   var selectedAtShiftLassoStart;
-  var animationMs = 100;
 
   var selectableContainer = $(".selectable-container");
   var allCards = {};
@@ -100,7 +100,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       if (!IsSelected(ui.helper)) {
         ui.helper.trigger("click");
       }
-      selected = GetSelected();
+      var selected = GetSelected();
       startGrabTop = ui.position.top
       startGrabLeft = ui.position.left
       currentPositions = selected.not(ui.helper).map(function() {
@@ -246,8 +246,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var groupIndex = Math.floor((i-1)/cardsPerGroup) + 1;
       var offset = groupIndex * offsetPerGroup;
 
-      $(inOrder[i]).animate({top: baseTop + offset, left: baseLeft + offset},
-          {duration: animationMs});
+      MoveCard(allCards[inOrder[i].id], baseTop + offset, baseLeft + offset);
     }
   }
 
@@ -274,10 +273,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var otherZIndices = GetZIndices($(others).not(elements));
     var maxOthers = Array.max(otherZIndices);
 
-    for (var i = 0; i < selected.length; i++) {
+    for (var i = 0; i < elements.length; i++) {
       var zIndex = maxOthers + 1 + origZOffsets[i];
-      $(selected[i]).zIndex(zIndex);
-      allCards[elements[i].id]["z-index"] = zIndex;
+      UpdateZIndex(allCards[elements[i].id], zIndex);
     }
   }
 
@@ -333,17 +331,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
   }
 
-  function FlipCard(card, frontUp) {
-    var url;
-    card.frontUp = frontUp;
-    if (frontUp) {
-      url = card.frontImage;
-    } else {
-      url = card.backImage;
-    }
-    $(card.element).css({"background-image": "url(" + url + ")"});
-  }
-
   function SendBoardUpdate() {
     var data = {}
     for (var domId in allCards) {
@@ -359,3 +346,23 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 }});
 });
+
+function FlipCard(card, frontUp) {
+  var url;
+  card.frontUp = frontUp;
+  if (frontUp) {
+    url = card.frontImage;
+  } else {
+    url = card.backImage;
+  }
+  $(card.element).css({"background-image": "url(" + url + ")"});
+}
+
+function MoveCard(card, newTop, newLeft) {
+  card.element.animate({top: newTop, left: newLeft}, {duration: ANIMATION_MS});
+}
+
+function UpdateZIndex(card, newZIndex) {
+  card.element.zIndex(newZIndex);
+  card["z-index"] = newZIndex;
+}
