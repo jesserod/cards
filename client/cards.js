@@ -1,25 +1,29 @@
+// Constants
 var BOARD_ID = 1;
 var ANIMATION_MS = 100;
+var UPDATE_LOOP_MS = 1000;
+
+// Global vars
+var dragging = false;
+var shiftPressed = false;
+var selectableContainer = null;
+// To keep track of items at the start of a shift-lasso so we can de-select
+// items en masse, and add new items to the selection en masse
+var selectedAtShiftLassoStart;
+var allCards = {};
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   console.log("BOARD LOADED:");
   console.log(board);
-  // Global vars
-  var dragging = false;
-  var shiftPressed = false;
-  // To keep track of items at the start of a shift-lasso so we can de-select
-  // items en masse, and add new items to the selection en masse
-  var selectedAtShiftLassoStart;
 
-  var selectableContainer = $(".selectable-container");
-  var allCards = {};
+  selectableContainer = $(".selectable-container");
 
   // Initialize DOM
   // cardInstanceId: Which card on the board.  Distinct from the ID of the card itself...
   // Maybe the ID for the card itself should be card UID
   for (var cardInstanceId in board.cardInstances) {
-    var domId = "cardInstance" + cardInstanceId;
+    var domId = CardInstanceIdToDomId(cardInstanceId);
     var card = board.cardInstances[cardInstanceId]
     var clientCard = CreateCard({
       id: domId,
@@ -332,19 +336,21 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function SendBoardUpdate() {
-    var data = {}
-    for (var domId in allCards) {
-      var card = allCards[domId];
-      data[card.cardInstanceId] = {
-        frontUp: card.frontUp,
-        top: card.element.offset().top,
-        left: card.element.offset().left,
-        zIndex: card["z-index"],
-      }
-    }
-    $.post("/updateboard/" + BOARD_ID, data);
+    console.log("Sending board update:");
+    console.log(GetCurrentBoard());
+    $.post("/updateboard/" + BOARD_ID, GetCurrentBoard());
   }
 }});
+
+
+function UpdateBoardLoop() {
+  $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
+    UpdateBoard(board);
+  }});
+  setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
+}
+UpdateBoardLoop();
+
 });
 
 function FlipCard(card, frontUp) {
@@ -358,11 +364,67 @@ function FlipCard(card, frontUp) {
   $(card.element).css({"background-image": "url(" + url + ")"});
 }
 
+// If either newTop or newLeft is null, does not animate in that dimension
 function MoveCard(card, newTop, newLeft) {
-  card.element.animate({top: newTop, left: newLeft}, {duration: ANIMATION_MS});
+  if (newTop != null && newLeft != null) {
+    var newOffset = {};
+    if (newTop != null) { newOffset.top = newTop; }
+    if (newLeft != null) { newOffset.left = newLeft; }
+    card.element.animate(newOffset, {duration: ANIMATION_MS});
+  }
 }
 
 function UpdateZIndex(card, newZIndex) {
   card.element.zIndex(newZIndex);
   card["z-index"] = newZIndex;
+}
+
+function UpdateBoard(boardFromServer) {
+  console.log("Getting board update");
+  console.log(util.Diff);
+  console.log(Array.max);
+  console.log(boardFromServer);
+  console.log(GetCurrentBoard());
+  var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
+  if (differences == null) {
+    console.log("No diffs");
+    return;
+  }
+  for (var cardInstanceId in differences) {
+    var domId = CardInstanceIdToDomId(cardInstanceId);
+    var card = allCards[domId];
+    var diff = differences[cardInstanceId];
+    if (diff != null) {
+      console.log("Diff:");
+      console.log(diff);
+    }
+   
+    if (diff.top != null || diff.left != null) {
+      MoveCard(card, diff.top, diff.left);
+    }
+    if (diff.zIndex != null) {
+      UpdateZIndex(card, diff.zIndex);
+    }
+    if (diff.frontUp) {
+      FlipCard(card, frontUp);
+    }
+  } 
+}
+
+function GetCurrentBoard() {
+  var data = {}
+  for (var domId in allCards) {
+    var card = allCards[domId];
+    data[card.cardInstanceId] = {
+      frontUp: card.frontUp,
+      top: card.element.offset().top,
+      left: card.element.offset().left,
+      zIndex: card["z-index"],
+    }
+  }
+  return data;
+}
+
+function CardInstanceIdToDomId(cardInstanceId) {
+  return "cardInstance" + cardInstanceId;
 }

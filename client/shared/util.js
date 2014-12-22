@@ -1,5 +1,5 @@
 (
-function exports(){
+function(exports) {
 
 /*
  * Returns an object that represents the difference between obj1 and obj2.  If
@@ -19,7 +19,7 @@ function exports(){
  * Diff({1:2, 2:3}, {1:3, 2:3}) == {1:3};
  * Diff({1:2, 2:3}, {1:3, 2:4}) == {1:3, 2:4};
  */
-function Diff(obj1, obj2) {
+exports.Diff = function(obj1, obj2) {
   if (typeof(obj1) == "object" && typeof(obj2) == "object") {
     var diff = {}
     for (var key in obj1) {
@@ -28,7 +28,7 @@ function Diff(obj1, obj2) {
       if (obj2[key] == null) {
         continue;
       }
-      var d = Diff(val1, val2);
+      var d = exports.Diff(val1, val2);
       if (d != null) {
         diff[key] = d;
       }

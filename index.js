@@ -73,6 +73,10 @@ app.post('/updateboard/:id', function(req, res) {
         if (!toUpdate) {
           continue;
         }
+
+        // TODO: Use util.Diff and then "flatten" to create dots in between
+        // TODO: Use util.Diff and then "flatten" to create dots in between
+        // TODO: Use util.Diff and then "flatten" to create dots in between
         var keyPrefix = "cardInstances." + c + ".";
         if (card.frontUp && toUpdate.frontUp == 'false') {
           changes[keyPrefix + "frontUp"] = false;
