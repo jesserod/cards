@@ -130,6 +130,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     stop: function(event, ui) {
       if (IsSelected(ui.helper)) {
         ui.helper.addClass("canDrag");
+        SendBoardUpdate();
       }
     },
   });
