@@ -67,9 +67,9 @@ app.post('/updateboard/:id', function(req, res) {
     } else {
       // Find cards that changed
       var changes = {};
-      for (var c in Object.keys(board.cardInstances)) {
+      for (var c in board.cardInstances) {
         var card = board.cardInstances[c];
-        var toUpdate = req.body[String(c)];
+        var toUpdate = req.body[c];
         if (!toUpdate) {
           continue;
         }
