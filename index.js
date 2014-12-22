@@ -91,12 +91,11 @@ app.post('/updateboard/:id', function(req, res) {
           changes[keyPrefix + "zIndex"] = parseInt(toUpdate.zIndex);
         }
       }
+      console.log("Changes:");
+      console.log(changes);
       if (Object.keys(changes).length > 0) {
         db.boards.update({id: boardId}, {$set: changes});
-        console.log("Changes:");
-        console.log(changes);
       }
-      console.log(changes);
       res.json({status: "ok"});
     }
   });
