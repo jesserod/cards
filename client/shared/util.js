@@ -1,8 +1,26 @@
 (
 function exports(){
 
+/*
+ * Returns an object that represents the difference between obj1 and obj2.  If
+ * obj2 is a primitive not null and is not equal to obj1, then obj2 is
+ * returned. If obj1 and obj2 are both objects, then Diff returns an object for
+ * differences for all keys that are present in obj1.  If obj2 does not contain
+ * a non-null value for a key from obj1, then the value in obj2 is not
+ * considered to be different from the value in obj1.  If obj2 contains values
+ * for keys that are not present in obj1, these are not considered differences
+ * and are thus not output.
+ *
+ * Examples:
+ * Diff(1,2) == 2;
+ * Diff(1,1) == null;
+ * Diff({1:2}, {1:2}) == null;
+ * Diff({1:2}, {1:3}) == {1:3};
+ * Diff({1:2, 2:3}, {1:3, 2:3}) == {1:3};
+ * Diff({1:2, 2:3}, {1:3, 2:4}) == {1:3, 2:4};
+ */
 function Diff(obj1, obj2) {
-  if (typeof(obj1) == "object") {
+  if (typeof(obj1) == "object" && typeof(obj2) == "object") {
     var diff = {}
     for (var key in obj1) {
       var val1 = obj1[key];
@@ -18,22 +36,13 @@ function Diff(obj1, obj2) {
     if (Object.keys(diff).length > 0) {
       return diff;
     }
-  } else if (obj1 !== obj2) {
+  } else if (obj2 != null && obj1 !== obj2) {
     return obj2
   }
 
   return null; // Equal
 }
 
-
-/* Tests
-console.log("----");
-Diff(1,2);
-console.log("----");
-Diff({1:2}, {1:3});
-console.log("----");
-Diff({1:{a:2,b:3}}, {1:{a:2,b:30}});
-*/
 
 /* 
  * Implement "string".format(args...) if it doesn't exist.
