@@ -57,15 +57,46 @@ app.get('/initdb', function(req, res) {
 });
 
 app.post('/updateboard/:id', function(req, res) {
+  console.log("Update request:");
   console.log(req.body);
-  db.board.findOne(req.params.id, function(err, board) {
+  var boardId = parseInt(req.params.id);
+  db.boards.findOne({id: boardId}, function(err, board) {
     if (err) {
-      console.log("error getting board " + req.params.id);
+      console.log("error getting board " + boardId);
       res.json({status: "error"});
     } else {
-      for (var card in board.cardInstances) {
-        
+      // Find cards that changed
+      var changes = {};
+      for (var c in Object.keys(board.cardInstances)) {
+        var card = board.cardInstances[c];
+        var toUpdate = req.body[String(c)];
+        if (!toUpdate) {
+          continue;
+        }
+        var keyPrefix = "cardInstances." + c + ".";
+        if (card.frontUp && toUpdate.frontUp == 'false') {
+          changes[keyPrefix + "frontUp"] = false;
+        }
+        if (!card.frontUp && toUpdate.frontUp == 'true') {
+          changes[keyPrefix + "frontUp"] = true;
+        }
+        // TODO: Add max boundaries on the cards
+        if (parseInt(toUpdate.top) != card.top) {
+          changes[keyPrefix + "top"] = parseInt(toUpdate.top);
+        }
+        if (parseInt(toUpdate.left) != card.left) {
+          changes[keyPrefix + "left"] = parseInt(toUpdate.left);
+        }
+        if (parseInt(toUpdate.zIndex) != card.zIndex) {
+          changes[keyPrefix + "zIndex"] = parseInt(toUpdate.zIndex);
+        }
       }
+      if (Object.keys(changes).length > 0) {
+        db.boards.update({id: boardId}, {$set: changes});
+        console.log("Changes:");
+        console.log(changes);
+      }
+      console.log(changes);
       res.json({status: "ok"});
     }
   });
