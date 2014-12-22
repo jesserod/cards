@@ -1,10 +1,11 @@
 // Constants
 var BOARD_ID = 1;
-var ANIMATION_MS = 100;
-var UPDATE_LOOP_MS = 1000;
+var MOVE_ANIMATION_MS = 100;
+var FLIP_ANIMATION_MS = 300;
+var UPDATE_LOOP_MS = 500;
 
 // Global vars
-var dragging = false;
+var cardLock = {}
 var shiftPressed = false;
 var selectableContainer = null;
 // To keep track of items at the start of a shift-lasso so we can de-select
@@ -99,6 +100,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     cursor: "-webkit-grabbing",
 
     start: function(event, ui) {
+      cardLock.drag = true;
+
       // If an item is not selected yet a drag event starts on it,
       // pretend it was clicked prior to dragging
       if (!IsSelected(ui.helper)) {
@@ -136,6 +139,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         ui.helper.addClass("canDrag");
         SendBoardUpdate();
       }
+      delete cardLock.drag;
     },
   });
 
@@ -170,6 +174,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var validKey = true;
     if (c == "t") {
       console.log("Taking");
+      // TODO: Take card function
+      // TODO: Call SendBoardUpdate inside Fxn
+      SendBoardUpdate();
     } else if (c == "u") {
       console.log("Flip Up");
       FlipSelectedCards(true);
@@ -185,7 +192,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     if (validKey) {
       var fakeMouseup = $.Event( "mouseup", { which: 1 } );
       draggable.trigger(fakeMouseup);
-      SendBoardUpdate();
     }
   });
 
@@ -237,20 +243,43 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(element).hasClass("ui-selecting");
   }
 
+  function IsCardLocked(card) {
+    if (IsSelected(card.element) || IsSelecting(card.element)) {
+      for (var key in cardLock) {
+        if (cardLock[key] == true) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   function GroupCards() {
+    var lockKey = LockCards("grouping");
     var tops = GetSelected().map(function() {return $(this).offset().top}).get();
     var lefts = GetSelected().map(function() {return $(this).offset().left}).get();
     var baseTop = Math.floor(Array.avg(tops));
     var baseLeft = Math.floor(Array.avg(lefts));
     var offsetPerGroup = 2;
     var cardsPerGroup = 3;
+    var doneStartingCardsMoving = false;
     // Sort by z-index
     var inOrder = GetSelected().toArray().sort(function(x,y) {return $(x).zIndex() - $(y).zIndex()});
+    var cardsToMove = inOrder.length;
     for (var i = 0; i < inOrder.length; i++) {
       var groupIndex = Math.floor((i-1)/cardsPerGroup) + 1;
       var offset = groupIndex * offsetPerGroup;
-
-      MoveCard(allCards[inOrder[i].id], baseTop + offset, baseLeft + offset);
+      function finishedMovingAllCards() {
+        cardsToMove--;
+        if (cardsToMove <= 0) {
+          UnlockCards(lockKey);
+          SendBoardUpdate();
+        }
+      }
+      // Note: cards have a move animation time, so we need to wait for the
+      // last card to be moved before we can unlock the cards and send the
+      // board update, thus we use a callback.
+      MoveCard(allCards[inOrder[i].id], baseTop + offset, baseLeft + offset, finishedMovingAllCards);
     }
   }
 
@@ -317,6 +346,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     cssMap["background-image"] = 'url("' + imageUrl + '")';
     cssMap["position"] = "absolute";
+    // Make it so that only changes to the background-image causes an animation
+    cssMap["transition"] = FLIP_ANIMATION_MS + "ms";
+    cssMap["transition-property"] = "background-image";
     card.element = $("<div></div>")
         .attr(attrMap)
         .css(cssMap)
@@ -327,104 +359,134 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function FlipSelectedCards(frontUp) {
+    // Note: while there is an animation effect, the state will be updated
+    // immediately at the end of this function, so it's safe to unlock.
+    var lockKey = LockCards("flip");
     GetSelected().each(function(index, element) {
       var card = allCards[element.id];
       if (card != null) {
         FlipCard(card, frontUp);
       }
     });
+    UnlockCards(lockKey);
+    SendBoardUpdate();
+  }
+
+  /* Returns a random ID of the lock. Takes a lock type string to help in debugging.
+   * Use only when you are locking/unlocking in the same function, otherwise, just
+   * access the lock directly.
+   */
+  function LockCards(lockType) {
+    var randomInt = Math.floor(Math.random() * (1000000000));
+    var key = String(lockType) + randomInt;
+    cardLock[key] = true;
+    return key;
+  }
+
+  // Takes the return value of LockCards
+  function UnlockCards(lockKey) {
+    if (cardLock[lockKey] != null) {
+      delete cardLock[lockKey];
+    }
   }
 
   function SendBoardUpdate() {
     console.log("Sending board update:");
     console.log(GetCurrentBoard());
-    $.post("/updateboard/" + BOARD_ID, GetCurrentBoard());
+    $.post("/updateboard/" + BOARD_ID, GetCurrentBoard(), function() {console.log("Sending success");});
   }
+
+  function FlipCard(card, frontUp) {
+    console.log('Flipping card to ' + frontUp);
+    var url = frontUp ? card.frontImage : card.backImage;
+    console.log(url);
+    card.frontUp = frontUp;
+    card.element.css({"background-image": "url(" + url + ")"});
+  }
+
+  // If either newTop or newLeft is null, does not animate in that dimension
+  // Callback gets called when the move animation is complete
+  function MoveCard(card, newTop, newLeft, callback) {
+    if (newTop != null && newLeft != null) {
+      var newOffset = {};
+      if (newTop != null) { newOffset.top = newTop; }
+      if (newLeft != null) { newOffset.left = newLeft; }
+      var opts = {duration: MOVE_ANIMATION_MS};
+      if (callback != null) {
+        opts.complete = callback;
+      }
+      card.element.animate(newOffset, opts);
+    }
+  }
+
+  function UpdateZIndex(card, newZIndex) {
+    card.element.zIndex(newZIndex);
+    card["z-index"] = newZIndex;
+  }
+
+  function UpdateBoard(boardFromServer) {
+    console.log("Getting board update");
+    var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
+    if (differences == null) {
+      console.log("No diffs");
+      return;
+    }
+    for (var cardInstanceId in differences) {
+      var domId = CardInstanceIdToDomId(cardInstanceId);
+      var card = allCards[domId];
+      var diff = differences[cardInstanceId];
+      if (diff != null) {
+        console.log("Diff:");
+        console.log(diff);
+      }
+     
+      // If this user is dragging or otherwise interacting this card, we won't
+      // move or modify it.  Note: this means it will appear as if this user
+      // overrode changes already made (eg if it's a long drag... it cause a
+      // very delayed override of the changes)
+      if (IsCardLocked(card)) {
+        console.log("Skipping update because card is locked");
+        continue;
+      }
+      if (diff.top != null || diff.left != null) {
+        MoveCard(card, diff.top, diff.left);
+      }
+      if (diff.zIndex != null) {
+        UpdateZIndex(card, diff.zIndex);
+      }
+      if (diff.frontUp != null) {
+        FlipCard(card, diff.frontUp);
+      }
+    } 
+  }
+
+  function GetCurrentBoard() {
+    var data = {}
+    for (var domId in allCards) {
+      var card = allCards[domId];
+      data[card.cardInstanceId] = {
+        frontUp: card.frontUp,
+        top: card.element.offset().top,
+        left: card.element.offset().left,
+        zIndex: card["z-index"],
+      }
+    }
+    return data;
+  }
+
+  function CardInstanceIdToDomId(cardInstanceId) {
+    return "cardInstance" + cardInstanceId;
+  }
+
+  function UpdateBoardLoop() {
+    console.log("Requesting latest");
+    $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
+      console.log("Got latest, updating");
+      UpdateBoard(board);
+    }});
+    setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
+  }
+  UpdateBoardLoop();
 }});
-
-
-function UpdateBoardLoop() {
-  $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
-    UpdateBoard(board);
-  }});
-  setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
-}
-UpdateBoardLoop();
-
 });
 
-function FlipCard(card, frontUp) {
-  var url;
-  card.frontUp = frontUp;
-  if (frontUp) {
-    url = card.frontImage;
-  } else {
-    url = card.backImage;
-  }
-  $(card.element).css({"background-image": "url(" + url + ")"});
-}
-
-// If either newTop or newLeft is null, does not animate in that dimension
-function MoveCard(card, newTop, newLeft) {
-  if (newTop != null && newLeft != null) {
-    var newOffset = {};
-    if (newTop != null) { newOffset.top = newTop; }
-    if (newLeft != null) { newOffset.left = newLeft; }
-    card.element.animate(newOffset, {duration: ANIMATION_MS});
-  }
-}
-
-function UpdateZIndex(card, newZIndex) {
-  card.element.zIndex(newZIndex);
-  card["z-index"] = newZIndex;
-}
-
-function UpdateBoard(boardFromServer) {
-  console.log("Getting board update");
-  console.log(util.Diff);
-  console.log(Array.max);
-  console.log(boardFromServer);
-  console.log(GetCurrentBoard());
-  var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
-  if (differences == null) {
-    console.log("No diffs");
-    return;
-  }
-  for (var cardInstanceId in differences) {
-    var domId = CardInstanceIdToDomId(cardInstanceId);
-    var card = allCards[domId];
-    var diff = differences[cardInstanceId];
-    if (diff != null) {
-      console.log("Diff:");
-      console.log(diff);
-    }
-   
-    if (diff.top != null || diff.left != null) {
-      MoveCard(card, diff.top, diff.left);
-    }
-    if (diff.zIndex != null) {
-      UpdateZIndex(card, diff.zIndex);
-    }
-    if (diff.frontUp) {
-      FlipCard(card, frontUp);
-    }
-  } 
-}
-
-function GetCurrentBoard() {
-  var data = {}
-  for (var domId in allCards) {
-    var card = allCards[domId];
-    data[card.cardInstanceId] = {
-      frontUp: card.frontUp,
-      top: card.element.offset().top,
-      left: card.element.offset().left,
-      zIndex: card["z-index"],
-    }
-  }
-  return data;
-}
-
-function CardInstanceIdToDomId(cardInstanceId) {
-  return "cardInstance" + cardInstanceId;
-}
