@@ -1,14 +1,14 @@
 module.exports = {
   create: function(boardId) {
-    cards = {}
+    cardInstances = {}
     numCards = 0;
     return {
       id: boardId,
-      cards: cards,
+      cardInstances: cardInstances,
       numCards: numCards,
 
       addCard: function(card, top, left, frontUp) {
-        cards[numCards] = {
+        cardInstances[numCards] = {
           card: card,
           top: top,
           left: left,

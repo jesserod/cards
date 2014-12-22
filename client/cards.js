@@ -16,18 +16,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   var allCards = {};
 
   // Initialize DOM
-  // cardId: Which card on the board.  Distinct from the ID of the card itself...
+  // cardInstanceId: Which card on the board.  Distinct from the ID of the card itself...
   // Maybe the ID for the card itself should be card UID
-  for (var cardId in board.cards) {
-    var domId = "card" + cardId;
-    var card = board.cards[cardId]
+  for (var cardInstanceId in board.cardInstances) {
+    var domId = "cardInstance" + cardInstanceId;
+    var card = board.cardInstances[cardInstanceId]
     var clientCard = CreateCard({
       id: domId,
-      cardId: cardId,
+      cardInstanceId: cardInstanceId,
       top: card.top,
       left: card.left,
       "z-index": card.zIndex,
-      text: "text" + cardId,
+      text: "text" + cardInstanceId,
       backImage: card.card.backImage,
       frontImage: card.card.frontImage,
       frontUp: card.frontUp,
@@ -285,7 +285,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardId"];
+    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardInstanceId"];
 
     var attrMap = {}
     var cssMap = {}
@@ -347,7 +347,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var data = {}
     for (var domId in allCards) {
       var card = allCards[domId];
-      data[card.cardId] = {
+      data[card.cardInstanceId] = {
         frontUp: card.frontUp,
         top: card.element.offset().top,
         left: card.element.offset().left,

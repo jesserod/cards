@@ -58,7 +58,17 @@ app.get('/initdb', function(req, res) {
 
 app.post('/updateboard/:id', function(req, res) {
   console.log(req.body);
-  res.json({});
+  db.board.findOne(req.params.id, function(err, board) {
+    if (err) {
+      console.log("error getting board " + req.params.id);
+      res.json({status: "error"});
+    } else {
+      for (var card in board.cardInstances) {
+        
+      }
+      res.json({status: "ok"});
+    }
+  });
 });
 
 // Prints JSON version of one item (if ID is specified) or a whole collection
