@@ -1,14 +1,12 @@
 module.exports = {
   create: function(boardId) {
-    cardInstances = {}
     numCards = 0;
-    return {
+    hash = {
       id: boardId,
-      cardInstances: cardInstances,
-      numCards: numCards,
+      cardInstances: {},
 
       addCard: function(card, top, left, frontUp) {
-        cardInstances[numCards] = {
+        hash.cardInstances[numCards] = {
           card: card,
           top: top,
           left: left,
@@ -17,6 +15,7 @@ module.exports = {
         };
         numCards++;
       } 
-    }
+    };
+    return hash;
   }
 }
