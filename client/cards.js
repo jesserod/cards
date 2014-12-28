@@ -1,7 +1,7 @@
 // Constants
 var BOARD_ID = 1;
 var MOVE_ANIMATION_MS = 100;
-var FLIP_ANIMATION_MS = 300;
+var FLIP_ANIMATION_MS = 200;
 var UPDATE_LOOP_MS = 500;
 
 // Global vars
@@ -14,6 +14,7 @@ var selectedAtShiftLassoStart;
 var allCards = {};
 var curMouseX = 0;
 var curMouseY = 0;
+var flipping = {};
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -250,7 +251,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(element).hasClass("ui-selecting");
   }
 
-  function IsCardLocked(card) {
+  function IsCardSelectLocked(card) {
     if (IsSelected(card.element) || IsSelecting(card.element)) {
       for (var key in cardLock) {
         if (cardLock[key] == true) {
@@ -354,8 +355,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     // cssMap["background-image"] = 'url("' + imageUrl + '")';
     cssMap["position"] = "absolute";
     // Make it so that only changes to the background-image causes an animation
-    cssMap["transition"] = FLIP_ANIMATION_MS + "ms";
-    cssMap["transition-property"] = "background-image";
+    // cssMap["transition"] = FLIP_ANIMATION_MS + "ms";
+    // cssMap["transition-property"] = "background-image";
     card.element = $("<div></div>")
         .attr(attrMap)
         .css(cssMap)
@@ -415,17 +416,25 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function FlipCard(card, frontUp) {
+    if (flipping[card.element.id] == true || frontUp == card.frontUp) {
+      return;
+    }
+    flipping[card.element.id] = true;
     console.log('Flipping card to ' + frontUp);
-    var url = frontUp ? card.frontImage : card.backImage;
-    console.log(url);
+    var img = card.element.children("img");
+    var newUrl = frontUp ? card.frontImage : card.backImage;
+    var curWidth = parseInt(img.css("width"));
+    var curHeight = parseInt(img.css("height"));
+    var curLeft = parseInt(card.element.offset().left);
+    img.animate({width: 0, height: curHeight}, FLIP_ANIMATION_MS/2, function() {
+      img.attr("src", newUrl);
+      img.animate({width: curWidth, height: curHeight}, FLIP_ANIMATION_MS/2);
+    });
+    card.element.animate({left: curLeft + Math.floor(curWidth/2)}, FLIP_ANIMATION_MS/2, function() {
+      card.element.animate({left: curLeft}, FLIP_ANIMATION_MS/2);
+    });
+    setTimeout(function() {delete flipping[card.element.id]}, FLIP_ANIMATION_MS)
     card.frontUp = frontUp;
-    // card.element.children("img").remove()
-    // card.element.css({"background-image": "url(" + url + ")"});
-    // TODO! Must flip card with animation
-    // TODO! Must flip card with animation
-    // TODO! Must flip card with animation
-    // TODO! Must flip card with animation
-    // TODO! Must flip card with animation
   }
 
   // If either newTop or newLeft is null, does not animate in that dimension
@@ -492,7 +501,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // move or modify it.  Note: this means it will appear as if this user
       // overrode changes already made (eg if it's a long drag... it cause a
       // very delayed override of the changes)
-      if (IsCardLocked(card)) {
+      if (IsCardSelectLocked(card)) {
         console.log("Skipping update because card is locked");
         continue;
       }
