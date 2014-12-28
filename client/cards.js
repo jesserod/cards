@@ -360,7 +360,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     card.element = $("<div></div>")
         .attr(attrMap)
         .css(cssMap)
-        .addClass("draggable");
+        .addClass("draggable card");
     card.element.append($("<p></p>").text(card.text));
     card.element.hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
@@ -373,6 +373,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
           UnzoomCard($(this), event);
         }
     });
+    card.element.mousedown(function(event) { UnzoomCard($(this), event); });
     return card;
   }
 
@@ -447,7 +448,12 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clone.attr("id", zoomId);
     clone.addClass("zoomedCard");
     clone.appendTo(card.parent());
-    clone.offset({top: curMouseY + 5, left: curMouseX + 5,})
+    clone.offset({top: curMouseY + 5, left: curMouseX + 5,});
+    clone.css({height: parseFloat(card.css("height")) * 2,
+               width: parseFloat(card.css("width")) * 2});
+    clone.children().remove();
+    $("<img src='" + clone.css("background-image").replace("url(", "").replace(")", "") + "'/>")
+      .appendTo(clone);
   }
 
   function UnzoomCard(card, event) {

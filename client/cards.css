@@ -3,16 +3,7 @@ body {
 }
 
 .draggable {
-  /* Match the image size */
-  width:76px;
-  height:99px;
-
-  /* background-image: url("demo-card-front.png"); */
-  background-repeat: no-repeat;
-  background-position: center;
-
   position:absolute;
-  color: yellow;
   cursor: pointer;
 }
 
@@ -34,6 +25,7 @@ body {
 
 .selectable-container { width: 600px; height: 600px; border: 1px solid black;}
 
+.card, 
 .selectable-container .ui-selectee { border: 1px solid grey; }
 /* Make selecting and selected same color to avoid confusion with lasso */
 .selectable-container .ui-selecting { border: 5px solid blue; } 
@@ -65,3 +57,20 @@ body {
 .blue:before { background-color: rgba(0,0,255,0.5); }
 
 .green:before { background-color: rgba(0,255,0,0.5); }
+
+.card {
+  /* Match the image size */
+  width:76px;
+  height:99px;
+
+  /* background-image: url("demo-card-front.png"); */
+  background-repeat: no-repeat;
+  background-position: center;
+
+  color: yellow;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+}
