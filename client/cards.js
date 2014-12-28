@@ -42,7 +42,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clientCard.element.parent().mousemove(function(event) {
       curMouseX = event.pageX;
       curMouseY = event.pageY;
-      // $(".zoomedCard").offset({left: curMouseX + 5, top: curMouseY + 5}) ;
+      $(".zoomedCard").offset({left: curMouseX + 5, top: curMouseY + 5}) ;
     });
 
     allCards[domId] = clientCard;
@@ -363,13 +363,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     $("<img src='" + imageUrl + "'/>").appendTo(card.element);
     card.element.children("img").hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
-        interval: 200, // number = milliseconds for onMouseOver polling interval
-        timeout: 200, // number = milliseconds delay before onMouseOut
+        interval: 600, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
+        timeout: 100, // number = milliseconds after leaving before triggering onMouseOut
         over: function(event) { // function = onMouseOver callback (REQUIRED)
-          ZoomCard($(this), event);
+          ZoomCard(card, event);
         },
         out: function(event) { // function = onMouseOut callback (REQUIRED)
-          UnzoomCard($(this), event);
+          UnzoomCard(card, event);
         }
     });
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
@@ -421,6 +421,11 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     card.frontUp = frontUp;
     // card.element.children("img").remove()
     // card.element.css({"background-image": "url(" + url + ")"});
+    // TODO! Must flip card with animation
+    // TODO! Must flip card with animation
+    // TODO! Must flip card with animation
+    // TODO! Must flip card with animation
+    // TODO! Must flip card with animation
   }
 
   // If either newTop or newLeft is null, does not animate in that dimension
@@ -439,26 +444,27 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function ZoomCard(card, event) {
-    var zoomId = card.attr("id") + "-zoom";
-    if ($("#" + zoomId) == null) {
+    if (card.frontUp != true) {
       return;
     }
-    var clone = card.clone(false);
+    var zoomId = card.element.attr("id") + "-zoom";
+    if ($("#" + zoomId) == null) {
+      console.log("here");
+      return;
+    }
+    var clone = card.element.clone(false);
     clone.removeClass("ui-selectee ui-selected ui-selecting");
     clone.attr("id", zoomId);
     clone.addClass("zoomedCard");
-    clone.appendTo(card.parent().parent());
-    clone.css("z-index", parseInt(card.css("z-index")) + 1);
+    clone.appendTo(card.element.parent());
+    clone.css("z-index", parseInt(card.element.css("z-index")) + 1);
     clone.offset({top: curMouseY + 5, left: curMouseX + 5,});
-    clone.css({height: parseFloat(card.css("height")) * 2,
-               width: parseFloat(card.css("width")) * 2});
-    clone.children().remove();
-    //$("<img src='" + clone.css("background-image").replace("url(", "").replace(")", "") + "'/>")
-      //.appendTo(clone);
+    clone.children("img").css({height: parseFloat(card.element.css("height")) * 2,
+               width: parseFloat(card.element.css("width")) * 2});
   }
 
   function UnzoomCard(card, event) {
-     // $(".zoomedCard").remove();
+     $(".zoomedCard").remove();
   }
 
   function UpdateZIndex(card, newZIndex) {
