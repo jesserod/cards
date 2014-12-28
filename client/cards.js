@@ -34,7 +34,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       top: card.top,
       left: card.left,
       "z-index": card.zIndex,
-      text: "text" + cardInstanceId,
       backImage: card.card.backImage,
       frontImage: card.card.frontImage,
       frontUp: card.frontUp,
@@ -43,7 +42,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clientCard.element.parent().mousemove(function(event) {
       curMouseX = event.pageX;
       curMouseY = event.pageY;
-      $(".zoomedCard").offset({left: curMouseX + 5, top: curMouseY + 5}) ;
+      // $(".zoomedCard").offset({left: curMouseX + 5, top: curMouseY + 5}) ;
     });
 
     allCards[domId] = clientCard;
@@ -325,7 +324,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardInstanceId"];
+    var otherKeys = ["frontImage", "backImage", "frontUp", "cardInstanceId"];
 
     var attrMap = {}
     var cssMap = {}
@@ -352,7 +351,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       imageUrl = card.backImage
     }
 
-    cssMap["background-image"] = 'url("' + imageUrl + '")';
+    // cssMap["background-image"] = 'url("' + imageUrl + '")';
     cssMap["position"] = "absolute";
     // Make it so that only changes to the background-image causes an animation
     cssMap["transition"] = FLIP_ANIMATION_MS + "ms";
@@ -361,8 +360,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         .attr(attrMap)
         .css(cssMap)
         .addClass("draggable card");
-    card.element.append($("<p></p>").text(card.text));
-    card.element.hoverIntent({
+    $("<img src='" + imageUrl + "'/>").appendTo(card.element);
+    card.element.children("img").hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
         interval: 200, // number = milliseconds for onMouseOver polling interval
         timeout: 200, // number = milliseconds delay before onMouseOut
@@ -420,7 +419,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var url = frontUp ? card.frontImage : card.backImage;
     console.log(url);
     card.frontUp = frontUp;
-    card.element.css({"background-image": "url(" + url + ")"});
+    // card.element.children("img").remove()
+    // card.element.css({"background-image": "url(" + url + ")"});
   }
 
   // If either newTop or newLeft is null, does not animate in that dimension
@@ -447,17 +447,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clone.removeClass("ui-selectee ui-selected ui-selecting");
     clone.attr("id", zoomId);
     clone.addClass("zoomedCard");
-    clone.appendTo(card.parent());
+    clone.appendTo(card.parent().parent());
+    clone.css("z-index", parseInt(card.css("z-index")) + 1);
     clone.offset({top: curMouseY + 5, left: curMouseX + 5,});
     clone.css({height: parseFloat(card.css("height")) * 2,
                width: parseFloat(card.css("width")) * 2});
     clone.children().remove();
-    $("<img src='" + clone.css("background-image").replace("url(", "").replace(")", "") + "'/>")
-      .appendTo(clone);
+    //$("<img src='" + clone.css("background-image").replace("url(", "").replace(")", "") + "'/>")
+      //.appendTo(clone);
   }
 
   function UnzoomCard(card, event) {
-     $(".zoomedCard").remove();
+     // $(".zoomedCard").remove();
   }
 
   function UpdateZIndex(card, newZIndex) {
@@ -527,7 +528,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  UpdateBoardLoop();
+  // UpdateBoardLoop();
 }});
 });
 
