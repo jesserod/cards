@@ -12,6 +12,8 @@ var selectableContainer = null;
 // items en masse, and add new items to the selection en masse
 var selectedAtShiftLassoStart;
 var allCards = {};
+var curMouseX = 0;
+var curMouseY = 0;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -38,6 +40,12 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       frontUp: card.frontUp,
     });
     selectableContainer.append(clientCard.element);
+    clientCard.element.parent().mousemove(function(event) {
+      curMouseX = event.pageX;
+      curMouseY = event.pageY;
+      $(".zoomedCard").offset({left: curMouseX + 5, top: curMouseY + 5}) ;
+    });
+
     allCards[domId] = clientCard;
   }
   var draggable = $(".draggable");
@@ -354,7 +362,17 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         .css(cssMap)
         .addClass("draggable");
     card.element.append($("<p></p>").text(card.text));
-
+    card.element.hoverIntent({
+        sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
+        interval: 200, // number = milliseconds for onMouseOver polling interval
+        timeout: 200, // number = milliseconds delay before onMouseOut
+        over: function(event) { // function = onMouseOver callback (REQUIRED)
+          ZoomCard($(this), event);
+        },
+        out: function(event) { // function = onMouseOut callback (REQUIRED)
+          UnzoomCard($(this), event);
+        }
+    });
     return card;
   }
 
@@ -417,6 +435,23 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       }
       card.element.animate(newOffset, opts);
     }
+  }
+
+  function ZoomCard(card, event) {
+    var zoomId = card.attr("id") + "-zoom";
+    if ($("#" + zoomId) == null) {
+      return;
+    }
+    var clone = card.clone(false);
+    clone.removeClass("ui-selectee ui-selected ui-selecting");
+    clone.attr("id", zoomId);
+    clone.addClass("zoomedCard");
+    clone.appendTo(card.parent());
+    clone.offset({top: curMouseY + 5, left: curMouseX + 5,})
+  }
+
+  function UnzoomCard(card, event) {
+     $(".zoomedCard").remove();
   }
 
   function UpdateZIndex(card, newZIndex) {
