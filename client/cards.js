@@ -35,6 +35,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       top: card.top,
       left: card.left,
       "z-index": card.zIndex,
+      text: "text" + cardInstanceId,
       backImage: card.card.backImage,
       frontImage: card.card.frontImage,
       frontUp: card.frontUp,
@@ -325,7 +326,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "frontUp", "cardInstanceId"];
+    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardInstanceId"];
 
     var attrMap = {}
     var cssMap = {}
@@ -373,6 +374,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
           UnzoomCard(card, event);
         }
     });
+    card.element.append($("<p></p>").text(card.text));
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
     return card;
   }
