@@ -15,11 +15,16 @@ var allCards = {};
 var curMouseX = 0;
 var curMouseY = 0;
 var flipping = {};
+var requestingUser = null;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
-  console.log("BOARD LOADED:");
-  console.log(board);
+  // Get the user from the URL params, assumes only one parameter called u
+  requestingUser = null;
+  var pathParts = ($(document)[0].URL).split("?u=");
+  if (pathParts.length == 2) {
+    requestingUser = pathParts[1];
+  }
 
   selectableContainer = $(".selectable-container");
 
@@ -35,10 +40,11 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       top: card.top,
       left: card.left,
       "z-index": card.zIndex,
-      text: "text" + cardInstanceId,
       backImage: card.card.backImage,
       frontImage: card.card.frontImage,
       frontUp: card.frontUp,
+      hand: card.hand,
+      user: requestingUser,
     });
     selectableContainer.append(clientCard.element);
     clientCard.element.parent().mousemove(function(event) {
@@ -326,7 +332,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "text", "frontUp", "cardInstanceId"];
+    var otherKeys = ["frontImage", "backImage", "frontUp", "cardInstanceId", "hand"];
 
     var attrMap = {}
     var cssMap = {}
@@ -347,23 +353,22 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
 
     var imageUrl;
-    if (card.frontUp) {
+    // The front of cards not in a hand is visible to everyone.
+    // The front of cards in a hand is only visible to their owner.
+    if (card.frontUp && !IsInOthersHand(card)) {
       imageUrl = card.frontImage;
     } else {
       imageUrl = card.backImage
     }
 
-    // cssMap["background-image"] = 'url("' + imageUrl + '")';
     cssMap["position"] = "absolute";
-    // Make it so that only changes to the background-image causes an animation
-    // cssMap["transition"] = FLIP_ANIMATION_MS + "ms";
-    // cssMap["transition-property"] = "background-image";
     card.element = $("<div></div>")
         .attr(attrMap)
         .css(cssMap)
         .addClass("draggable card");
-    $("<img src='" + imageUrl + "'/>").appendTo(card.element);
-    card.element.children("img").hoverIntent({
+    card.imageElement = $("<img src='" + imageUrl + "'/>");
+    card.imageElement.appendTo(card.element);
+    card.imageElement.hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
         interval: 600, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
         timeout: 100, // number = milliseconds after leaving before triggering onMouseOut
@@ -374,7 +379,16 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
           UnzoomCard(card, event);
         }
     });
-    card.element.append($("<p></p>").text(card.text));
+    card.handElement = $("<p></p>").text(card.hand);
+    card.handElement.hide();
+    if (IsInOthersHand(card)) {
+      card.handElement.show();
+    }
+    if (IsInUsersHand(card)) {
+      card.element.addClass("inHand");
+    }
+    card.handElement.appendTo(card.element);
+
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
     return card;
   }
@@ -391,6 +405,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
     UnlockCards(lockKey);
     SendBoardUpdate();
+  }
+
+  function IsInAHand(card) {
+    return card.hand != null;
+  }
+
+  function IsInUsersHand(card) {
+    return card.hand == requestingUser
+  }
+
+  function IsInOthersHand(card) {
+    return IsInAHand(card) && !IsInUsersHand(card);
   }
 
   /* Returns a random ID of the lock. Takes a lock type string to help in debugging.
@@ -418,12 +444,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function FlipCard(card, frontUp) {
+    // Prevent flipping if card flipping is in progress, and if the card is already in
+    // the correct orientation.
     if (flipping[card.element.id] == true || frontUp == card.frontUp) {
+      return;
+    }
+    // Prevent flipping of other people's cards
+    if (IsInOthersHand(card)) {
       return;
     }
     flipping[card.element.id] = true;
     console.log('Flipping card to ' + frontUp);
-    var img = card.element.children("img");
+    var img = card.imageElement;
     var newUrl = frontUp ? card.frontImage : card.backImage;
     var curWidth = parseInt(img.css("width"));
     var curHeight = parseInt(img.css("height"));
@@ -455,7 +487,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function ZoomCard(card, event) {
-    if (card.frontUp != true) {
+    // Don't zoom in on cards that have their backs showing
+    if (card.imageElement.attr("src") == card.backImage) {
       return;
     }
     var zoomId = card.element.attr("id") + "-zoom";
@@ -545,7 +578,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  // UpdateBoardLoop();
+  UpdateBoardLoop();
 }});
 });
 

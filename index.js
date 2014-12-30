@@ -32,8 +32,10 @@ app.get('/newboard', function (req, res) {
         delete card._id;
         console.log(JSON.stringify(card));
         board.addCard(card, 0, 0, true);
-        board.addCard(card, 60, 0, true);
-        board.addCard(card, 120, 0, false);
+        board.addCard(card, 20, 0, true);
+        board.addCard(card, 40, 0, false);
+        board.addCard(card, 60, 0, false, "foo");
+        board.addCard(card, 80, 0, false, "bar");
         db.boards.insert(board);
         res.send("" + board.id);
       }
