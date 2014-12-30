@@ -3,6 +3,8 @@ var BOARD_ID = 1;
 var MOVE_ANIMATION_MS = 100;
 var FLIP_ANIMATION_MS = 200;
 var UPDATE_LOOP_MS = 500;
+var HOVER_ENTER_DELAY = 600;
+var HOVER_LEAVE_DELAY = 100;
 
 // Global vars
 var cardLock = {}
@@ -16,6 +18,8 @@ var curMouseX = 0;
 var curMouseY = 0;
 var flipping = {};
 var requestingUser = null;
+var mousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
+var hoveringOverCard = {}; // Which face-up cards are being hovered over (card.id => true)
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -269,6 +273,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return false;
   }
 
+  function IsFrontShowing(card) {
+    return card.imageElement.attr("src") == card.frontImage;
+  }
+
+  function IsZooming() {
+    return $(".zoomedCard").length > 0;
+  }
+
   function GroupCards() {
     var lockKey = LockCards("grouping");
     var tops = GetSelected().map(function() {return $(this).offset().top}).get();
@@ -370,14 +382,57 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     card.imageElement.appendTo(card.element);
     card.imageElement.hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
-        interval: 600, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
-        timeout: 100, // number = milliseconds after leaving before triggering onMouseOut
-        over: function(event) { // function = onMouseOver callback (REQUIRED)
-          ZoomCard(card, event);
+        interval: HOVER_ENTER_DELAY, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
+        timeout: HOVER_LEAVE_DELAY, // number = milliseconds after leaving before triggering onMouseOut
+        over: function() { // function = onMouseOver callback (REQUIRED)
+          // Only zoom in on card fronts
+          if (IsFrontShowing(card)) {
+            hoveringOverCard[card.id] = true;
+            console.log("Zooming bc hover");
+            ZoomCard(card);
+          }
         },
-        out: function(event) { // function = onMouseOut callback (REQUIRED)
-          UnzoomCard(card, event);
+        out: function() { // function = onMouseOut callback (REQUIRED)
+          console.log("In unhover for card: " + card.id);
+          delete hoveringOverCard[card.id];
+          if (Object.keys(mousingOverCard).length == 0) {
+            console.log("Unzooming from no hover");
+            UnzoomCard(card);
+          } else {
+            console.log("NOT unzooming bc still over cards: ");
+            console.log(mousingOverCard);
+          }
         }
+    });
+
+    // TODO!!!!!
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // TODO: Z-index of zoomed card should float to top
+    // If already zooming in, just zoom in on that card as well
+    card.imageElement.mouseenter(function() {
+      if (IsFrontShowing(card)) {
+        mousingOverCard[card.id] = true;
+        if (IsZooming()) {
+          console.log("Zooming bc enter while already zooming");
+          ZoomCard(card);
+        }
+      } 
+    });
+    card.imageElement.mouseleave(function() {
+      delete mousingOverCard[card.id];
+      setTimeout(function() {
+          if (Object.keys(mousingOverCard).length == 0) {
+            console.log("Unzooming bc mouseleave and not over card still");
+            UnzoomCard(card);
+          }
+        }, HOVER_LEAVE_DELAY
+      );
     });
     card.handElement = $("<p></p>").text(card.hand);
     card.handElement.hide();
@@ -446,7 +501,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   function FlipCard(card, frontUp) {
     // Prevent flipping if card flipping is in progress, and if the card is already in
     // the correct orientation.
-    if (flipping[card.element.id] == true || frontUp == card.frontUp) {
+    if (flipping[card.id] == true || frontUp == card.frontUp) {
       return;
     }
     if (IsInOthersHand(card)) {
@@ -456,7 +511,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       return; // Prevent flipping a card in hand face down
     }
 
-    flipping[card.element.id] = true;
+    flipping[card.id] = true;
+    console.log(flipping);
     console.log('Flipping card to ' + frontUp);
     var img = card.imageElement;
     var newUrl = frontUp ? card.frontImage : card.backImage;
@@ -470,7 +526,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     card.element.animate({left: curLeft + Math.floor(curWidth/2)}, FLIP_ANIMATION_MS/2, function() {
       card.element.animate({left: curLeft}, FLIP_ANIMATION_MS/2);
     });
-    setTimeout(function() {delete flipping[card.element.id]}, FLIP_ANIMATION_MS)
+    setTimeout(function() {delete flipping[card.id]}, FLIP_ANIMATION_MS)
     card.frontUp = frontUp;
   }
 
@@ -489,16 +545,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
   }
 
-  function ZoomCard(card, event) {
-    // Don't zoom in on cards that have their backs showing
-    if (card.imageElement.attr("src") == card.backImage) {
-      return;
-    }
+  function ZoomCard(card) {
+    UnzoomCard(card);
     var zoomId = card.element.attr("id") + "-zoom";
-    if ($("#" + zoomId) == null) {
-      console.log("here");
-      return;
-    }
     var clone = card.element.clone(false);
     clone.removeClass("ui-selectee ui-selected ui-selecting");
     clone.attr("id", zoomId);
@@ -510,7 +559,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
                width: parseFloat(card.element.css("width")) * 2});
   }
 
-  function UnzoomCard(card, event) {
+  function UnzoomCard(card) {
      $(".zoomedCard").remove();
   }
 
@@ -581,7 +630,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  UpdateBoardLoop();
+  // UpdateBoardLoop();
 }});
 });
 
