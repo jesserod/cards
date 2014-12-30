@@ -449,10 +449,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     if (flipping[card.element.id] == true || frontUp == card.frontUp) {
       return;
     }
-    // Prevent flipping of other people's cards
     if (IsInOthersHand(card)) {
-      return;
+      return; // Prevent flipping of other people's cards
     }
+    if (IsInUsersHand(card) && !frontUp) {
+      return; // Prevent flipping a card in hand face down
+    }
+
     flipping[card.element.id] = true;
     console.log('Flipping card to ' + frontUp);
     var img = card.imageElement;
