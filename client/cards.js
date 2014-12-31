@@ -19,7 +19,6 @@ var curMouseY = 0;
 var flipping = {};
 var requestingUser = null;
 var mousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
-var hoveringOverCard = {}; // Which face-up cards are being hovered over (card.id => true)
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -387,52 +386,33 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         over: function() { // function = onMouseOver callback (REQUIRED)
           // Only zoom in on card fronts
           if (IsFrontShowing(card)) {
-            hoveringOverCard[card.id] = true;
-            console.log("Zooming bc hover");
             ZoomCard(card);
           }
         },
         out: function() { // function = onMouseOut callback (REQUIRED)
-          console.log("In unhover for card: " + card.id);
-          delete hoveringOverCard[card.id];
           if (Object.keys(mousingOverCard).length == 0) {
-            console.log("Unzooming from no hover");
             UnzoomCard(card);
-          } else {
-            console.log("NOT unzooming bc still over cards: ");
-            console.log(mousingOverCard);
           }
         }
     });
 
-    // TODO!!!!!
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // TODO: Z-index of zoomed card should float to top
-    // If already zooming in, just zoom in on that card as well
+    // If already zooming in, the next face-up card should instantly zoom
     card.imageElement.mouseenter(function() {
       if (IsFrontShowing(card)) {
         mousingOverCard[card.id] = true;
         if (IsZooming()) {
-          console.log("Zooming bc enter while already zooming");
           ZoomCard(card);
         }
       } 
     });
+    // Stop zooming when we have zoomed via mouseenter (instead of hover).
     card.imageElement.mouseleave(function() {
       delete mousingOverCard[card.id];
       setTimeout(function() {
-          if (Object.keys(mousingOverCard).length == 0) {
-            console.log("Unzooming bc mouseleave and not over card still");
-            UnzoomCard(card);
-          }
-        }, HOVER_LEAVE_DELAY
-      );
+        if (Object.keys(mousingOverCard).length == 0) {
+          UnzoomCard(card);
+        }
+      }, HOVER_LEAVE_DELAY);
     });
     card.handElement = $("<p></p>").text(card.hand);
     card.handElement.hide();
@@ -557,6 +537,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clone.offset({top: curMouseY + 5, left: curMouseX + 5,});
     clone.children("img").css({height: parseFloat(card.element.css("height")) * 2,
                width: parseFloat(card.element.css("width")) * 2});
+    var maxCardZIndex = Array.max(GetZIndices($(".card")));
+    clone.zIndex(maxCardZIndex + 1);
   }
 
   function UnzoomCard(card) {
