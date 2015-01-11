@@ -204,6 +204,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     } else if (c == "g") {
       GroupCards();
       console.log("Group");
+    } else if (c == "f") {
+      FanHand();
+      console.log("Fan");
     } else {
       validKey = false;
     }
@@ -282,13 +285,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function GroupCards() {
     var lockKey = LockCards("grouping");
-    var tops = GetSelected().map(function() {return $(this).offset().top}).get();
-    var lefts = GetSelected().map(function() {return $(this).offset().left}).get();
-    var baseTop = Math.floor(Array.avg(tops));
-    var baseLeft = Math.floor(Array.avg(lefts));
+    var baseTop = Math.floor(GetOffsets(GetSelected(), "top", "avg"));
+    var baseLeft = Math.floor(GetOffsets(GetSelected(), "left", "avg"));
     var offsetPerGroup = 2;
     var cardsPerGroup = 3;
-    var doneStartingCardsMoving = false;
     // Sort by z-index
     var inOrder = GetSelected().toArray().sort(function(x,y) {return $(x).zIndex() - $(y).zIndex()});
     var cardsToMove = inOrder.length;
@@ -309,6 +309,98 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
   }
 
+  /** Returns jquery collection of hand card elements */
+  function GetHandCards() {
+    handCards = [];
+    for (var key in allCards) {
+      if (allCards[key].hand === requestingUser) {
+        handCards.push(allCards[key].element);
+      }
+    }
+    return $(handCards);
+  }
+
+  /**
+   * Returns the left or top coordinates of the elements in the jquery collection.
+   * leftOrTop should be "left" or "top."  If agg is specified as "avg", "min" or "max"
+   * then the average, min, or max of these values will be returned.
+   */
+  function GetOffsets(collection, leftOrTop, agg) {
+    var ret = collection.map(function() {return $(this).offset()[leftOrTop]}).get();
+    if (agg != null) {
+      return Array[agg](ret);
+    } else {
+      return ret;
+    }
+  }
+
+  /**
+   * Return the element with the highest or lowest value of a given property.
+   *
+   * collection: jquery collection of elements
+   * getter: a function that retrieves a value from a jquery element
+   * doMin: true if the minimum value is requested, otherwise the maximum value
+   */
+  function GetXMost(collection, getter, isMin) {
+    var minElement, maxElement, minVal, maxVal;
+    for (var i = 0; i < collection.length; i++) {
+      var ele = collection[i];
+      var val = getter(ele);
+      if (i == 0 || val < minVal) {
+        minElement = ele;
+        minVal = val;
+      }
+      if (i == 0 || val > maxVal) {
+        maxElement = ele;
+        maxVal = val;
+      }
+    }
+    return isMin ? minElement : maxElement;
+  }
+
+  /** Returns array */
+  function SortByLeft(collection) {
+    return collection.toArray().sort(function(x,y) {return $(x).offset().left - $(y).offset().left});
+  }
+
+  /** Returns the card object associated with the jquery element of the card */
+  function GetCard(element) {
+    // Sometimes jquery objects are array-like
+    if (element != null && element[0] != null) {
+      element = element[0];
+    }
+    return allCards[element.id];
+  }
+
+  function FanHand() {
+    var lockKey = LockCards("fanning");
+    var handCards = SortByLeft(GetHandCards());
+    var baseLeft = handCards[0].offset().left;
+    var baseTop = handCards[0].offset().top;
+
+    var xOffset = 20;
+    var cardsToMove = handCards.length;
+    for (var i = 0; i < handCards.length; i++) {
+      // We want to send an update after all cards have moved
+      function finishedMovingAllCards() {
+        cardsToMove--;
+        if (cardsToMove <= 0) {
+          UnlockCards(lockKey);
+          SendBoardUpdate();
+        }
+      }
+      // Note: cards have a move animation time, so we need to wait for the
+      // last card to be moved before we can unlock the cards and send the
+      // board update, thus we use a callback.
+      var card = GetCard(handCards[i]);
+      // Set z-index to a relative value, it will be changed to the correct absolute-value
+      // when we move all these cards to the top
+      UpdateZIndex(card, i);
+      MoveCard(card, baseTop, baseLeft + xOffset * i, finishedMovingAllCards);
+    }
+    BringToFront(handCards, $(".card"));
+  }
+
   function GetZIndices(elements) {
     return $(elements).map(function() {
       return $(this).zIndex();
@@ -316,25 +408,27 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   /*
-   * Bring the given elements to the foreground such that every item
-   * in elements has a higher z-index than the highest z-index in others.
+   * Bring the given card elements to the foreground such that every item
+   * in elements has a higher z-index than the highest z-index in otherElements.
    * The relative offsets of z-index within elements will be preserved.
    */
-  function BringToFront(elements, others) {
-    if (elements == null || others == null || elements.length == 0 || others.length == 0) {
+  function BringToFront(cardElements, otherElements) {
+    if (cardElements == null || otherElements == null
+        || cardElements.length == 0 || otherElements.length == 0) {
       return;
     }
-    elements = $(elements).toArray(); // Preserve order by converting to array (if not already one)
-    var origZIndices = GetZIndices(elements);
+    // Preserve order by converting to array (if not already one)
+    cardElements = $(cardElements).toArray();
+    var origZIndices = GetZIndices(cardElements);
     var minOrig = Array.min(origZIndices);
     var origZOffsets = origZIndices.map(function(x) {return x - minOrig});
 
-    var otherZIndices = GetZIndices($(others).not(elements));
+    var otherZIndices = GetZIndices($(otherElements).not(cardElements));
     var maxOthers = Array.max(otherZIndices);
 
-    for (var i = 0; i < elements.length; i++) {
+    for (var i = 0; i < cardElements.length; i++) {
       var zIndex = maxOthers + 1 + origZOffsets[i];
-      UpdateZIndex(allCards[elements[i].id], zIndex);
+      UpdateZIndex(GetCard(cardElements[i]), zIndex);
     }
   }
 
@@ -454,7 +548,12 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return IsInAHand(card) && !IsInUsersHand(card);
   }
 
-  /* Returns a random ID of the lock. Takes a lock type string to help in debugging.
+  /* 
+   * For some actions where there is a slow animation or chance of a race condition,
+   * we must lock the cards so the user doesn't queue up too many actions (or so
+   * there isn't an unpredictable outcome).
+   *
+   * Returns a random ID of the lock. Takes a lock type string to help in debugging.
    * Use only when you are locking/unlocking in the same function, otherwise, just
    * access the lock directly.
    */
@@ -545,9 +644,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
      $(".zoomedCard").remove();
   }
 
-  function UpdateZIndex(card, newZIndex) {
-    card.element.zIndex(newZIndex);
-    card["z-index"] = newZIndex;
+  function UpdateZIndex(cardObject, newZIndex) {
+    cardObject.element.zIndex(newZIndex);
+    cardObject["z-index"] = newZIndex;
   }
 
   function UpdateBoard(boardFromServer) {
