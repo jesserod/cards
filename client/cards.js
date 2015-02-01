@@ -493,10 +493,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         interval: HOVER_ENTER_DELAY, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
         timeout: HOVER_LEAVE_DELAY, // number = milliseconds after leaving before triggering onMouseOut
         over: function() { // function = onMouseOver callback (REQUIRED)
-          // Only zoom in on card fronts
-          if (IsFrontShowing(card)) {
-            ZoomCard(card);
-          }
+          ZoomCard(card);
         },
         out: function() { // function = onMouseOut callback (REQUIRED)
           if (Object.keys(mousingOverCard).length == 0) {
@@ -507,12 +504,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     // If already zooming in, the next face-up card should instantly zoom
     card.imageElement.mouseenter(function() {
-      if (IsFrontShowing(card)) {
-        mousingOverCard[card.id] = true;
-        if (IsZooming()) {
-          ZoomCard(card);
-        }
-      } 
+      mousingOverCard[card.id] = true;
+      if (IsZooming()) {
+        ZoomCard(card);
+      }
     });
     // Stop zooming when we have zoomed via mouseenter (instead of hover).
     card.imageElement.mouseleave(function() {
@@ -600,9 +595,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
     if (IsInOthersHand(card)) {
       return; // Prevent flipping of other people's cards
-    }
-    if (IsInUsersHand(card) && !frontUp) {
-      return; // Prevent flipping a card in hand face down
     }
 
     flipping[card.id] = true;
