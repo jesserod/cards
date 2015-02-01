@@ -5,6 +5,7 @@ var FLIP_ANIMATION_MS = 200;
 var UPDATE_LOOP_MS = 500;
 var HOVER_ENTER_DELAY = 600;
 var HOVER_LEAVE_DELAY = 100;
+var FAN_OFFSET = 20;
 
 // Global vars
 var cardLock = {}
@@ -256,6 +257,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(".ui-selectee", container);
   }
 
+  function Deselect() {
+    GetSelected().removeClass(".ui-selected");
+  }
+
   function IsSelected(element) {
     return $(element).hasClass("ui-selected");
   }
@@ -372,13 +377,19 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return allCards[element.id];
   }
 
-  function FanHand() {
+  function FanHand(addSelectedCards) {
     var lockKey = LockCards("fanning");
     var handCards = SortByLeft(GetHandCards());
+    if (addSelectedCards) {
+      var selected = SortByLeft(GetSelected());
+      for (var i = 0; i < selected.length; i++) {
+        handCards.push(selected[i]);
+      }
+      Deselect();
+    }
     var baseLeft = handCards[0].offset().left;
     var baseTop = handCards[0].offset().top;
 
-    var xOffset = 20;
     var cardsToMove = handCards.length;
     for (var i = 0; i < handCards.length; i++) {
       // We want to send an update after all cards have moved
@@ -396,9 +407,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // Set z-index to a relative value, it will be changed to the correct absolute-value
       // when we move all these cards to the top
       UpdateZIndex(card, i);
-      MoveCard(card, baseTop, baseLeft + xOffset * i, finishedMovingAllCards);
+      MoveCard(card, baseTop, baseLeft + FAN_OFFSET * i, finishedMovingAllCards);
     }
     BringToFront(handCards, $(".card"));
+  }
+
+  function TakeSelectedCards() {
+    FanHand(true);
   }
 
   function GetZIndices(elements) {
