@@ -211,7 +211,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       GroupCards();
       console.log("Group");
     } else if (c == "f") {
-      FanHand();
+      FanCards(GetHandCards());
       console.log("Fan");
     } else {
       validKey = false;
@@ -383,21 +383,15 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return allCards[element.id];
   }
 
-  function FanHand(addSelectedCards) {
+  /** cards: a jquery cards collection */
+  function FanCards(cards) {
     var lockKey = LockCards("fanning");
-    var handCards = SortByLeft(GetHandCards());
-    if (addSelectedCards) {
-      var selected = SortByLeft(GetSelected());
-      for (var i = 0; i < selected.length; i++) {
-        handCards.push(selected[i]);
-      }
-      Deselect();
-    }
-    var baseLeft = handCards[0].offset().left;
-    var baseTop = handCards[0].offset().top;
+    var cards = SortByLeft(cards);
+    var baseLeft = cards[0].offset().left;
+    var baseTop = cards[0].offset().top;
 
-    var cardsToMove = handCards.length;
-    for (var i = 0; i < handCards.length; i++) {
+    var cardsToMove = cards.length;
+    for (var i = 0; i < cards.length; i++) {
       // We want to send an update after all cards have moved
       function finishedMovingAllCards() {
         cardsToMove--;
@@ -409,13 +403,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // Note: cards have a move animation time, so we need to wait for the
       // last card to be moved before we can unlock the cards and send the
       // board update, thus we use a callback.
-      var card = GetCard(handCards[i]);
+      var card = GetCard(cards[i]);
       // Set z-index to a relative value, it will be changed to the correct absolute-value
       // when we move all these cards to the top
       UpdateZIndex(card, i);
       MoveCard(card, baseTop, baseLeft + FAN_OFFSET * i, finishedMovingAllCards);
     }
-    BringToFront(handCards, $(".card"));
+    BringToFront(cards, $(".card"));
   }
 
   function TakeSelectedCards() {
