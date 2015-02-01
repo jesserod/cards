@@ -383,12 +383,21 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return allCards[element.id];
   }
 
-  /** cards: a jquery cards collection */
-  function FanCards(cards) {
+  /**
+   * cards: a jquery cards collection.
+   * anchor: null if the fanning should occur at the leftmost element in cards,
+   *         otherwise it occurs starting just to the right of the given anchor element.
+   */
+  function FanCards(cards, anchor) {
     var lockKey = LockCards("fanning");
     var cards = SortByLeft(cards);
-    var baseLeft = cards[0].offset().left;
-    var baseTop = cards[0].offset().top;
+    if (anchor == null) {
+      var baseLeft = cards[0].offset().left;
+      var baseTop = cards[0].offset().top;
+    } else {
+      var baseLeft = anchor.offset().left + FAN_OFFSET;
+      var baseTop = anchor.offset().top;
+    }
 
     var cardsToMove = cards.length;
     for (var i = 0; i < cards.length; i++) {
@@ -414,13 +423,25 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function TakeSelectedCards() {
     // TODO: logic that prevents flipping should be same as logic that prevents taking
+    var handCards = GetHandCards();
+    var anchor = null;
+    // Anchor on the rightmost hand card if a hand exists
+    if (handCards.length > 0) {
+      handCards = SortByLeft(GetHandCards());
+      anchor = handCards[handCards.length - 1];
+    }
+    var added = $();
     GetSelected().each(function(index, element) {
       var card = allCards[element.id];
       if (card != null && card.hand == null) {
         card.hand = requestingUser;
         card.element.addClass("inHand");
+        added = added.add(card.element);
       }
     });
+    if (handCards.length > 0) {
+      FanCards(added, anchor);
+    }
     Deselect();
     SendBoardUpdate();
   }
