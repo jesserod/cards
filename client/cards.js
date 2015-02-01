@@ -29,6 +29,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   if (pathParts.length == 2) {
     requestingUser = pathParts[1];
   }
+  if (requestingUser == null) {
+    $("body").text("Please specify a user with ?u=USERNAME");
+    return;
+  }
 
   selectableContainer = $(".selectable-container");
 
@@ -193,9 +197,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var validKey = true;
     if (c == "t") {
       console.log("Taking");
-      // TODO: Take card function
-      // TODO: Call SendBoardUpdate inside Fxn
-      SendBoardUpdate();
+      TakeSelectedCards();
+    } else if (c == "a") {
+      console.log("Playing");
+      PlaySelectedCards();
     } else if (c == "u") {
       console.log("Flip Up");
       FlipSelectedCards(true);
@@ -258,7 +263,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function Deselect() {
-    GetSelected().removeClass(".ui-selected");
+    GetSelected().removeClass("ui-selected");
+    GetSelected().removeClass("ui-selecting");
   }
 
   function IsSelected(element) {
@@ -413,7 +419,28 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function TakeSelectedCards() {
-    FanHand(true);
+    // TODO: logic that prevents flipping should be same as logic that prevents taking
+    GetSelected().each(function(index, element) {
+      var card = allCards[element.id];
+      if (card != null && card.hand == null) {
+        card.hand = requestingUser;
+        card.element.addClass("inHand");
+      }
+    });
+    Deselect();
+    SendBoardUpdate();
+  }
+
+  function PlaySelectedCards() {
+    GetSelected().each(function(index, element) {
+      var card = allCards[element.id];
+      if (card != null && card.hand == requestingUser) {
+        card.hand = null;
+        card.element.removeClass("inHand");
+      }
+    });
+    Deselect();
+    SendBoardUpdate();
   }
 
   function GetZIndices(elements) {
@@ -698,6 +725,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = allCards[domId];
       data[card.cardInstanceId] = {
         frontUp: card.frontUp,
+        hand: card.hand,
         top: card.element.offset().top,
         left: card.element.offset().left,
         zIndex: card["z-index"],

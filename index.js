@@ -96,6 +96,12 @@ app.post('/updateboard/:id', function(req, res) {
         if (parseInt(toUpdate.zIndex) != card.zIndex) {
           changes[keyPrefix + "zIndex"] = parseInt(toUpdate.zIndex);
         }
+        if (toUpdate.hand != card.hand) {
+          changes[keyPrefix + "hand"] = toUpdate.hand;
+          if (changes[keyPrefix + "hand"] == "") {
+            changes[keyPrefix + "hand"] = null;
+          }
+        }
       }
       console.log("Changes:");
       console.log(changes);
