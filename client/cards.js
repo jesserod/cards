@@ -169,7 +169,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         RemoveCardFromHand(card);
         snedUpdate = true;
       } else if (!IsInAHand(card) && !isInPlayableArea) {
-        console.log("Putting into hand");
         PutCardInHand(card);
         snedUpdate = true;
       }
