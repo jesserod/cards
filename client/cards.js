@@ -158,8 +158,30 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     },
 
     stop: function(event, ui) {
-      if (IsSelected(ui.helper)) {
-        ui.helper.addClass("canDrag");
+      var sendUpdate = false;
+      var card = GetCard(ui.helper);
+      var cardElement = ui.helper;
+
+      // If was in a hand, and now is in playable area, then mark as in play
+      // and remove it from the hand. And vice versa:
+      var isInPlayableArea = cardElement.overlaps($("#playable-area")).hits.length > 0;
+      if (IsInUsersHand(card) && isInPlayableArea) {
+        RemoveCardFromHand(card);
+        snedUpdate = true;
+      } else if (!IsInAHand(card) && !isInPlayableArea) {
+        console.log("Putting into hand");
+        PutCardInHand(card);
+        snedUpdate = true;
+      }
+
+      // Restore the ability to drag the element
+      if (IsSelected(cardElement)) {
+        cardElement.addClass("canDrag");
+        Deselect(cardElement);
+        sendUpdate = true;
+      }
+
+      if (sendUpdate) {
         SendBoardUpdate();
       }
       delete cardLock.drag;
@@ -195,13 +217,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   $(document).keypress(function(e) {
     var c = String.fromCharCode(e.which);
     var validKey = true;
-    if (c == "t") {
-      console.log("Taking");
-      TakeSelectedCards();
-    } else if (c == "a") {
-      console.log("Playing");
-      PlaySelectedCards();
-    } else if (c == "u") {
+    if (c == "u") {
       console.log("Flip Up");
       FlipSelectedCards(true);
     } else if (c == "d") {
@@ -262,9 +278,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(".ui-selectee", container);
   }
 
-  function Deselect() {
-    GetSelected().removeClass("ui-selected");
-    GetSelected().removeClass("ui-selecting");
+  /** Deselect the given jquery elements, if none specified, deselects all selected */
+  function Deselect(elements) {
+    if (elements == null) {
+      elements = GetSelected();
+    } 
+    GetSelected().filter(elements).removeClass("ui-selected");
+    GetSelected().filter(elements).removeClass("ui-selecting");
   }
 
   function IsSelected(element) {
@@ -421,41 +441,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     BringToFront(cards, $(".card"));
   }
 
-  function TakeSelectedCards() {
-    // TODO: logic that prevents flipping should be same as logic that prevents taking
-    var handCards = GetHandCards();
-    var anchor = null;
-    // Anchor on the rightmost hand card if a hand exists
-    if (handCards.length > 0) {
-      handCards = SortByLeft(GetHandCards());
-      anchor = handCards[handCards.length - 1];
+  function PutCardInHand(card) {
+    if (card != null && card.hand == null) {
+      card.hand = requestingUser;
+      card.element.addClass("inHand");
     }
-    var added = $();
-    GetSelected().each(function(index, element) {
-      var card = allCards[element.id];
-      if (card != null && card.hand == null) {
-        card.hand = requestingUser;
-        card.element.addClass("inHand");
-        added = added.add(card.element);
-      }
-    });
-    if (handCards.length > 0) {
-      FanCards(added, anchor);
-    }
-    Deselect();
-    SendBoardUpdate();
   }
 
-  function PlaySelectedCards() {
-    GetSelected().each(function(index, element) {
-      var card = allCards[element.id];
-      if (card != null && card.hand == requestingUser) {
-        card.hand = null;
-        card.element.removeClass("inHand");
-      }
-    });
-    Deselect();
-    SendBoardUpdate();
+  function RemoveCardFromHand(card) {
+    if (card != null && card.hand == requestingUser) {
+      card.hand = null;
+      card.element.removeClass("inHand");
+    }
   }
 
   function GetZIndices(elements) {
@@ -624,9 +621,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function SendBoardUpdate() {
-    console.log("Sending board update:");
-    console.log(GetCurrentBoard());
-    $.post("/updateboard/" + BOARD_ID, GetCurrentBoard(), function() {console.log("Sending success");});
+    var debug = false;
+    if (debug) {
+      console.log("Sending board update:");
+        console.log(GetCurrentBoard());
+      }
+    $.post("/updateboard/" + BOARD_ID, GetCurrentBoard(), function() {
+        if (debug) { console.log("Sending success"); };
+    });
   }
 
   function FlipCard(card, frontUp) {

@@ -24,8 +24,9 @@ body {
 
 .canDrag { cursor: -webkit-grab; }
 
-.selectable-container { width: 600px; height: 600px; border: 1px solid black;}
+#playable-area  {background-color: #D3F8D3; position: absolute; left: 120px; top: 120px; width: 600px; height: 600px; border: 1px solid black;}
 
+.selectable-container {width: 600px; height: 600px; border: 1px solid black; padding: 120px;}
 .selectable-container .ui-selecting { background-color: rgba(0,155,0,0.5); } 
 .selectable-container .ui-selected { background-color: rgba(0,155,0,0.5);  }
 
