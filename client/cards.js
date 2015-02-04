@@ -176,7 +176,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // Restore the ability to drag the element
       if (IsSelected(cardElement)) {
         cardElement.addClass("canDrag");
-        Deselect(cardElement);
+        Deselect();
         sendUpdate = true;
       }
 
