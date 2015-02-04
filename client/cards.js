@@ -446,7 +446,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     // and remove it from the hand. And vice versa:
     cardElements.each(function(index, cardElement) {
       var card = GetCard(cardElement);
-      var isInPlayableArea = $(cardElement).overlaps($("#playable-area")).hits.length > 0;
+      var isInPlayableArea = $(cardElement).find("img").overlaps($("#playable-area")).hits.length > 0;
       if (IsInUsersHand(card) && isInPlayableArea) {
         RemoveCardFromHand(card);
       } else if (!IsInAHand(card) && !isInPlayableArea) {
