@@ -24,19 +24,30 @@ body {
 
 .canDrag { cursor: -webkit-grab; }
 
-#playable-area  {background-color: #D3F8D3; position: absolute; left: 120px; top: 120px; width: 600px; height: 600px; border: 1px solid black;}
+#playable-area  {background-color: #D3F8D3; position: absolute; left: 150; top: 150; width: 600px; height: 600px; border: 1px solid black;}
 
-.selectable-container {width: 600px; height: 600px; border: 1px solid black; padding: 120px;}
-.selectable-container .ui-selecting { background-color: rgba(0,155,0,0.5); } 
-.selectable-container .ui-selected { background-color: rgba(0,155,0,0.5);  }
+.selectable-container {width: 1000px; height: 1000px; border: 1px solid black;}
+.selectable-container .ui-selecting { background-color: rgba(170,0,255,0.5); } 
+.selectable-container .ui-selected { background-color: rgba(170,0,255,0.5);  }
 
 .card {
   background-color: none;
-  padding: 2px;
+  /*
+   * Padding is needed to provide image border-like coloring via the <div><img/></div>
+   * card construct. Note: that we want to have both border coloring and the drop
+   * shadow coloring.
+   */
+   padding: 3px;
 }
 
 .inHand {
-  background-color: rgba(255, 255, 0 , 0.5);
+  /* If we want to have border-like coloring for hand cards,
+   * we can use background color */
+  /* background-color: rgba(255, 255, 0 , 0.5); */
+}
+
+.inHand img {
+  box-shadow: 0px 0px 15px rgba(20, 230, 0, 1);
 }
 
 .card img {

@@ -641,7 +641,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
 
     flipping[card.id] = true;
-    console.log(flipping);
     console.log('Flipping card to ' + frontUp);
     var img = card.imageElement;
     var newUrl = frontUp ? card.frontImage : card.backImage;
