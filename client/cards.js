@@ -162,16 +162,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = GetCard(ui.helper);
       var cardElement = ui.helper;
 
-      // If was in a hand, and now is in playable area, then mark as in play
-      // and remove it from the hand. And vice versa:
-      var isInPlayableArea = cardElement.overlaps($("#playable-area")).hits.length > 0;
-      if (IsInUsersHand(card) && isInPlayableArea) {
-        RemoveCardFromHand(card);
-        snedUpdate = true;
-      } else if (!IsInAHand(card) && !isInPlayableArea) {
-        PutCardInHand(card);
-        snedUpdate = true;
-      }
+      UpdateCardsInPlay(GetSelected().add(cardElement));
 
       // Restore the ability to drag the element
       if (IsSelected(cardElement)) {
@@ -451,6 +442,19 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     if (card != null && card.hand == requestingUser) {
       card.hand = null;
       card.element.removeClass("inHand");
+    }
+  }
+  
+  function UpdateCardsInPlay(cardElements) {
+    // If was in a hand, and now is in playable area, then mark as in play
+    // and remove it from the hand. And vice versa:
+    var isInPlayableArea = cardElement.overlaps($("#playable-area")).hits.length > 0;
+    if (IsInUsersHand(card) && isInPlayableArea) {
+      RemoveCardFromHand(card);
+      snedUpdate = true;
+    } else if (!IsInAHand(card) && !isInPlayableArea) {
+      PutCardInHand(card);
+      snedUpdate = true;
     }
   }
 
