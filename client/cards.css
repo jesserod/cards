@@ -40,7 +40,7 @@ body {
    * card construct. Note: that we want to have both border coloring and the drop
    * shadow coloring.
    */
-   padding: 3px;
+   padding: 2px;
 }
 
 .inHand {

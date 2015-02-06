@@ -157,8 +157,17 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       });
 
       // Check whether a card is hovering over the playable area
-      var isOverlapping = GetSelected().overlaps($("#playable-area")).hits.length > 0;
-      if (isOverlapping) {
+      var someOverlapping = false;
+      GetSelected().each(function(index, cardElement) {
+        var isInPlayableArea = $(cardElement).overlaps($("#playable-area")).hits.length > 0;
+        if (isInPlayableArea) {
+          someOverlapping = true;
+          $(cardElement).removeClass("inHand");
+        } else {
+          $(cardElement).addClass("inHand");
+        }
+      });
+      if (someOverlapping) {
         $("#playable-area").addClass("cardOverPlayable");
       } else {
         $("#playable-area").removeClass("cardOverPlayable");
