@@ -1,5 +1,6 @@
 body {
   padding: 0px;
+  margin: 1px;
 }
 
 .draggable {
@@ -24,7 +25,9 @@ body {
 
 .canDrag { cursor: -webkit-grab; }
 
-#playable-area {z-index: -999; background-color: #C8B699; position: absolute; left: 150px; top: 150px; width: 600px; height: 600px; border: 1px solid black;}
+.cardOverPlayable {box-shadow: 0px 0px 50px orange;}
+
+#playable-area {z-index: -999; background-image: url("wood.jpg"); position: absolute; left: 150px; top: 150px; width: 600px; height: 600px; border: 1px solid black;}
 
 .selectable-container {width: 1000px; height: 1000px; border: 1px solid black; }
 .selectable-container .ui-selecting { background-color: rgba(170,0,255,0.5); } 

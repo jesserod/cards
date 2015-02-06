@@ -155,6 +155,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         element.style.top = currentPositions[index].top + topMoved;
         element.style.left = currentPositions[index].left + leftMoved;
       });
+
+      // Check whether a card is hovering over the playable area
+      var isOverlapping = GetSelected().overlaps($("#playable-area")).hits.length > 0;
+      if (isOverlapping) {
+        $("#playable-area").addClass("cardOverPlayable");
+      } else {
+        $("#playable-area").removeClass("cardOverPlayable");
+      }
     },
 
     stop: function(event, ui) {
@@ -165,6 +173,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // Restore the ability to drag the element
       cardElement.addClass("canDrag");
       Deselect();
+      $("#playable-area").removeClass("cardOverPlayable");
 
       SendBoardUpdate();
       delete cardLock.drag;
