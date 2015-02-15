@@ -43,12 +43,18 @@ app.get('/newboard', function (req, res) {
   });
 });
 
-// Initalizes the database
+/*
+ * Initalizes the database which tells us which cards exist
+ * (their IDs, the images used for each card, etc).
+ */
 app.get('/initdb', function(req, res) {
   res.send("Initializing DB");
   var bulk = db.cards.initializeOrderedBulkOp();
   bulk.find({}).remove()
-  bulk.insert(Card.create(1));
+  // Insert playing cards into DB
+  for (var i = 1; i < 54; i++) {
+    bulk.insert(Card.create(i-1, "img/playing", i + ".png", "b2fv.png"));
+  }
   bulk.execute(function(err, results) {
     if (!err) {
       console.log("Cards seeded");

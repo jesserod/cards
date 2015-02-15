@@ -1,9 +1,9 @@
 module.exports = {
-  create: function(id) {
+  create: function(id, basePath, front, back) {
     return {
       id: id,
-      frontImage: "demo-card-front.png",
-      backImage: "demo-card-back.png",
+      frontImage: basePath + "/" + front,
+      backImage: basePath + "/" + back,
     }
   }
 }
