@@ -158,7 +158,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
       // Check whether a card is hovering over the playable area
       var someOverlapping = false;
-      GetSelected().each(function(index, cardElement) {
+      var otherHandCards = GetHandCards(requestingUser, true);
+      GetSelected().not(otherHandCards).each(function(index, cardElement) {
         var isInPlayableArea = $(cardElement).overlaps($("#playable-area")).hits.length > 0;
         if (isInPlayableArea) {
           someOverlapping = true;
@@ -228,7 +229,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       GroupCards();
       console.log("Group");
     } else if (c == "f") {
-      FanCards(GetHandCards());
+      FanCards(GetHandCards(requestingUser));
       console.log("Fan");
     } else {
       validKey = false;
@@ -341,15 +342,23 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
   }
 
-  /** Returns jquery collection of hand card elements */
-  function GetHandCards() {
-    handCards = [];
+  /**
+   * Returns jquery collection of hand card elements.  If specified user is null,
+   * assumes the requesting user.  If negating, then returns cards of hand other
+   * than the specified user
+   */
+  function GetHandCards(user, negate) {
+    if (user == null) {
+      user = requestingUser
+    }
+    handCards = $();
     for (var key in allCards) {
-      if (allCards[key].hand === requestingUser) {
-        handCards.push(allCards[key].element);
+      if ((negate && allCards[key].hand !== user) ||
+           !negate && allCards[key].hand === user ) {
+        handCards = handCards.add(allCards[key].element);
       }
     }
-    return $(handCards);
+    return handCards;
   }
 
   /**
@@ -413,8 +422,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var lockKey = LockCards("fanning");
     var cards = SortByLeft(cards);
     if (anchor == null) {
-      var baseLeft = cards[0].offset().left;
-      var baseTop = cards[0].offset().top;
+      var baseLeft = $(cards[0]).offset().left;
+      var baseTop = $(cards[0]).offset().top;
     } else {
       var baseLeft = anchor.offset().left + FAN_OFFSET;
       var baseTop = anchor.offset().top;
