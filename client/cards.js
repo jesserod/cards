@@ -330,7 +330,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       return {top: c.offset().top, left: c.offset().left, zIndex: c.zIndex()};
     });
     var offsetPerGroup = 2;
-    var cardsPerGroup = 3;
+    var cardsPerGroup = 8;
+
     var newPos = util.GroupCardPositions(origPos, offsetPerGroup, cardsPerGroup);
     var cardsToMove = newPos.length;
     for (var i = 0; i < newPos.length; i++) {
