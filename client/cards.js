@@ -359,7 +359,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
     handCards = $();
     for (var key in allCards) {
-      if ((negate && allCards[key].hand !== user) ||
+      if ((negate && allCards[key].hand != null && allCards[key].hand !== user) ||
            !negate && allCards[key].hand === user ) {
         handCards = handCards.add(allCards[key].element);
       }
