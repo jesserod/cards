@@ -89,6 +89,9 @@ exports.GroupCardPositions = function(pos, offsetPerGroup, cardsPerGroup) {
 
   var baseTop = Math.floor(Array.avg(pos.map(function(x){return x.top})));
   var baseLeft = Math.floor(Array.avg(pos.map(function(x){return x.left})));
+  var numGroups = Math.floor(pos.length / cardsPerGroup) + (pos.length % cardsPerGroup > 0 ? 1 : 0);
+  baseTop -= Math.floor(numGroups * offsetPerGroup / 2);
+  baseLeft -= Math.floor(numGroups * offsetPerGroup / 2);
 
   // Sort by z-index
   sortedIndices = [];
