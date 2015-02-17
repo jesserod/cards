@@ -19,7 +19,8 @@ var curMouseX = 0;
 var curMouseY = 0;
 var flipping = {};
 var requestingUser = null;
-var mousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
+var isMousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
+var isMouseDown = false;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -33,6 +34,11 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     $("body").text("Please specify a user with ?u=USERNAME");
     return;
   }
+
+  // Keep track of when the mouse is down
+  $("body").mousedown(function(event) {isMouseDown = true;});
+  $("body").mouseup(function(event) {isMouseDown = false;});
+  $("body").mouseleave(function(event) {isMouseDown = false;});
 
   selectableContainer = $(".selectable-container");
 
@@ -559,10 +565,12 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         interval: HOVER_ENTER_DELAY, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
         timeout: HOVER_LEAVE_DELAY, // number = milliseconds after leaving before triggering onMouseOut
         over: function() { // function = onMouseOver callback (REQUIRED)
-          ZoomCard(card);
+          if (!isMouseDown) {
+            ZoomCard(card);
+          }
         },
         out: function() { // function = onMouseOut callback (REQUIRED)
-          if (Object.keys(mousingOverCard).length == 0) {
+          if (Object.keys(isMousingOverCard).length == 0) {
             UnzoomCard(card);
           }
         }
@@ -570,16 +578,16 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     // If already zooming in, the next face-up card should instantly zoom
     card.imageElement.mouseenter(function() {
-      mousingOverCard[card.id] = true;
-      if (IsZooming()) {
+      isMousingOverCard[card.id] = true;
+      if (IsZooming() && !isMouseDown) {
         ZoomCard(card);
       }
     });
     // Stop zooming when we have zoomed via mouseenter (instead of hover).
     card.imageElement.mouseleave(function() {
-      delete mousingOverCard[card.id];
+      delete isMousingOverCard[card.id];
       setTimeout(function() {
-        if (Object.keys(mousingOverCard).length == 0) {
+        if (Object.keys(isMousingOverCard).length == 0) {
           UnzoomCard(card);
         }
       }, HOVER_LEAVE_DELAY);
