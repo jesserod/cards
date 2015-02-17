@@ -25,17 +25,16 @@ app.get('/newboard', function (req, res) {
     boardId.value += 1;
     db.meta.save(boardId);
     var board = Board.create(boardId.value);
-    db.cards.findOne({id: 1}, function(err, card) {
+
+    db.cards.find({collection: "playing"}, function(err, cards) {
       if (err) {
         res.send(err);
       } else {
-        delete card._id;
-        console.log(JSON.stringify(card));
-        board.addCard(card, 0, 0, true);
-        board.addCard(card, 20, 0, true);
-        board.addCard(card, 40, 0, false);
-        board.addCard(card, 60, 0, true, "foo");
-        board.addCard(card, 80, 0, true, "bar");
+        // console.log(JSON.stringify(cards));
+        for (var i = 0; i < cards.length; ++i) {
+          delete cards[i]._id;
+          board.addCard(cards[i], 200, 200, true);
+        }
         db.boards.insert(board);
         res.send("" + board.id);
       }
@@ -52,8 +51,9 @@ app.get('/initdb', function(req, res) {
   var bulk = db.cards.initializeOrderedBulkOp();
   bulk.find({}).remove()
   // Insert playing cards into DB
-  for (var i = 1; i < 54; i++) {
-    bulk.insert(Card.create(i-1, "img/playing", i + ".png", "b2fv.png"));
+  var collection = "playing";
+  for (var i = 0; i < 54; i++) {
+    bulk.insert(Card.create(i, collection, "img/" + collection, (i+1) + ".png", "b2fv.png"));
   }
   bulk.execute(function(err, results) {
     if (!err) {
