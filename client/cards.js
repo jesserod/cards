@@ -324,16 +324,16 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function GroupCards() {
     var lockKey = LockCards("grouping");
-    var baseTop = Math.floor(GetOffsets(GetSelected(), "top", "avg")) - 1;
-    var baseLeft = Math.floor(GetOffsets(GetSelected(), "left", "avg")) - 1;
+    var selected = GetSelected();
+    var origPos = selected.toArray().map(function(jqCard) {
+      var c = $(jqCard);
+      return {top: c.offset().top, left: c.offset().left, zIndex: c.zIndex()};
+    });
     var offsetPerGroup = 2;
     var cardsPerGroup = 3;
-    // Sort by z-index
-    var inOrder = GetSelected().toArray().sort(function(x,y) {return $(x).zIndex() - $(y).zIndex()});
-    var cardsToMove = inOrder.length;
-    for (var i = 0; i < inOrder.length; i++) {
-      var groupIndex = Math.floor((i-1)/cardsPerGroup) + 1;
-      var offset = groupIndex * offsetPerGroup;
+    var newPos = util.GroupCardPositions(origPos, offsetPerGroup, cardsPerGroup);
+    var cardsToMove = newPos.length;
+    for (var i = 0; i < newPos.length; i++) {
       function finishedMovingAllCards() {
         cardsToMove--;
         if (cardsToMove <= 0) {
@@ -344,7 +344,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // Note: cards have a move animation time, so we need to wait for the
       // last card to be moved before we can unlock the cards and send the
       // board update, thus we use a callback.
-      MoveCard(allCards[inOrder[i].id], baseTop + offset, baseLeft + offset, finishedMovingAllCards);
+      MoveCard(allCards[selected[i].id], newPos[i].top, newPos[i].left, finishedMovingAllCards);
     }
   }
 

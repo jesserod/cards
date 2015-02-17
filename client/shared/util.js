@@ -78,5 +78,36 @@ Array.avg = function(array){
   return array.reduce(function(total, val) {return total + val}, 0) / array.length;
 };
 
+// Takes a list of objects each with a "top", "left" and "zIndex"
+exports.GroupCardPositions = function(pos, offsetPerGroup, cardsPerGroup) {
+  if (offsetPerGroup == null) {
+    offsetPerGroup = 2;
+  }
+  if (cardsPerGroup == null) {
+    cardsPerGroup = 3;
+  }
+
+  var baseTop = Math.floor(Array.avg(pos.map(function(x){return x.top})));
+  var baseLeft = Math.floor(Array.avg(pos.map(function(x){return x.left})));
+
+  // Sort by z-index
+  sortedIndices = [];
+  for (var i = 0; i < pos.length; i++) {
+    sortedIndices.push(i);
+  }
+  sortedIndices = sortedIndices.sort(function(i1, i2) {return pos[i1].zIndex - pos[i2].zIndex});
+
+  var newPositions = new Array(pos.length);
+  for (var newIndex = 0; newIndex < sortedIndices.length; newIndex++) {
+    var groupIndex = Math.floor((newIndex-1)/cardsPerGroup) + 1;
+    var offset = groupIndex * offsetPerGroup;
+    var origIndex = sortedIndices[newIndex];
+    newPositions[origIndex] = {top: baseTop + offset, left: baseLeft + offset, zIndex: pos[origIndex].zIndex};
+  }
+  
+  return newPositions;
+}
+
+
 } // End of exports
 )(typeof exports === 'undefined'? this['util']={}: exports);
