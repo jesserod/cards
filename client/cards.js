@@ -324,8 +324,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function GroupCards() {
     var lockKey = LockCards("grouping");
-    var baseTop = Math.floor(GetOffsets(GetSelected(), "top", "avg"));
-    var baseLeft = Math.floor(GetOffsets(GetSelected(), "left", "avg"));
+    var baseTop = Math.floor(GetOffsets(GetSelected(), "top", "avg")) - 1;
+    var baseLeft = Math.floor(GetOffsets(GetSelected(), "left", "avg")) - 1;
     var offsetPerGroup = 2;
     var cardsPerGroup = 3;
     // Sort by z-index
