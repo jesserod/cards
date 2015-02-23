@@ -3,21 +3,24 @@ function(exports) {
 
 /*
  * Returns an object that represents the difference between obj1 and obj2.  If
- * obj2 is a primitive not null and is not equal to obj1, then obj2 is
- * returned. If obj1 and obj2 are both objects, then Diff returns an object for
+ * obj2 is a primitive (non-object) and obj2 !== obj1, then obj2 is returned.
+ * Otherwise, undefined is returned, indicating that the two objects are equal.
+ * If obj1 and obj2 are both objects, then Diff returns an object for
  * differences for all keys that are present in obj1.  If obj2 does not contain
- * a non-null value for a key from obj1, then the value in obj2 is not
+ * a defined value for a key from obj1, then the value in obj2 is not
  * considered to be different from the value in obj1.  If obj2 contains values
  * for keys that are not present in obj1, these are not considered differences
  * and are thus not output.
  *
  * Examples:
- * Diff(1,2) == 2;
- * Diff(1,1) == null;
- * Diff({1:2}, {1:2}) == null;
- * Diff({1:2}, {1:3}) == {1:3};
- * Diff({1:2, 2:3}, {1:3, 2:3}) == {1:3};
- * Diff({1:2, 2:3}, {1:3, 2:4}) == {1:3, 2:4};
+   util.Diff(1,2) === 2;
+   util.Diff(1,1) === undefined;
+   util.Diff({1:2}, {1:2}) === undefined;
+   util.Diff({1:2}, {10:20}) === undefined;
+   util.Diff({1:2}, {1:3}) === {1:3};
+   util.Diff({1:2, 2:3}, {1:3, 2:3}) === {1:3};
+   util.Diff({1:2, 2:3}, {1:3, 2:4}) === {1:3, 2:4};
+   util.Diff({1:2}, {1:null}) === null;
  */
 exports.Diff = function(obj1, obj2) {
   if (typeof(obj1) == "object" && typeof(obj2) == "object") {
@@ -25,22 +28,23 @@ exports.Diff = function(obj1, obj2) {
     for (var key in obj1) {
       var val1 = obj1[key];
       var val2 = obj2[key];
-      if (obj2[key] == null) {
+      if (!(key in obj2)) {
         continue;
       }
       var d = exports.Diff(val1, val2);
-      if (d != null) {
+      // If we detected a difference, store it
+      if (d !== undefined) {
         diff[key] = d;
       }
     }
     if (Object.keys(diff).length > 0) {
       return diff;
     }
-  } else if (obj2 != null && obj1 !== obj2) {
-    return obj2
+  } else if (obj2 !== obj1) {
+    return obj2;
   }
 
-  return null; // Equal
+  return undefined; // Equal
 }
 
 

@@ -736,20 +736,20 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function UpdateBoard(boardFromServer) {
-    console.log("Getting board update");
+    // console.log("Getting board update");
     var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
-    if (differences == null) {
-      console.log("No diffs");
+    if (differences === undefined) {
+      // console.log("No diffs");
       return;
     }
     for (var cardInstanceId in differences) {
       var domId = CardInstanceIdToDomId(cardInstanceId);
       var card = allCards[domId];
       var diff = differences[cardInstanceId];
-      if (diff != null) {
-        console.log("Diff:");
-        console.log(diff);
-      }
+      // if (diff !== undefined) {
+      //   console.log("Diff:");
+      //   console.log(diff);
+      // }
      
       // If this user is dragging or otherwise interacting this card, we won't
       // move or modify it.  Note: this means it will appear as if this user
@@ -759,14 +759,17 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         console.log("Skipping update because card is locked");
         continue;
       }
-      if (diff.top != null || diff.left != null) {
+      if (diff.top !== undefined || diff.left !== undefined) {
         MoveCard(card, diff.top, diff.left);
       }
-      if (diff.zIndex != null) {
+      if (diff.zIndex !== undefined) {
         UpdateZIndex(card, diff.zIndex);
       }
-      if (diff.frontUp != null) {
+      if (diff.frontUp !== undefined) {
         FlipCard(card, diff.frontUp);
+      }
+      if (diff.hand !== undefined) {
+        UpdateCardHand(card, diff.hand);
       }
     } 
   }
