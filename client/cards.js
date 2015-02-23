@@ -458,20 +458,30 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     BringToFront(cards, $(".card"));
   }
 
-  function PutCardInHand(card) {
-    if (card != null && card.hand == null) {
-      card.hand = requestingUser;
+  function UpdateCardHand(card, newHand) {
+    if (card == null) {
+      return;
+    }
+    card.hand = newHand;
+
+    if (!IsInAHand(card)) {
+      card.handElement.hide();
+      card.element.removeClass("inHand");
+    } else if (IsInUsersHand(card)) {
+      card.handElement.hide();
       card.element.addClass("inHand");
+    } else if (IsInOthersHand(card)) {
+      card.handElement.show();
+      card.element.removeClass("inHand");
+    }
+
+    // Flip the card if necessary
+    if (IsFrontShowing(card) != card.frontUp) {
+      FlipCard(card, card.frontUp);
     }
   }
 
-  function RemoveCardFromHand(card) {
-    if (card != null && card.hand == requestingUser) {
-      card.hand = null;
-      card.element.removeClass("inHand");
-    }
-  }
-  
+
   function UpdateCardsInPlay(cardElements) {
     if (cardElements == null) {
       cardElements = $(".card");
@@ -481,10 +491,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     cardElements.each(function(index, cardElement) {
       var card = GetCard(cardElement);
       var isInPlayableArea = $(cardElement).overlaps($("#playable-area")).hits.length > 0;
-      if (IsInUsersHand(card) && isInPlayableArea) {
-        RemoveCardFromHand(card);
-      } else if (!IsInAHand(card) && !isInPlayableArea) {
-        PutCardInHand(card);
+      if (IsInUsersHand(card) && isInPlayableArea && card.hand === requestingUser) {
+        UpdateCardHand(card, null);
+      } else if (!IsInAHand(card) && !isInPlayableArea && card.hand == null) {
+        UpdateCardHand(card, requestingUser);
       }
     });
   }
@@ -594,13 +604,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       }, HOVER_LEAVE_DELAY);
     });
     card.handElement = $("<p></p>").text(card.hand);
-    card.handElement.hide();
-    if (IsInOthersHand(card)) {
-      card.handElement.show();
-    }
-    if (IsInUsersHand(card)) {
-      card.element.addClass("inHand");
-    }
+    UpdateCardHand(card, card.hand);
     card.handElement.appendTo(card.element);
 
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
@@ -667,10 +671,11 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
   }
 
-  function FlipCard(card, frontUp) {
+  function FlipCard(card, newFrontUp) {
+    console.log(IsFrontShowing(card));
     // Prevent flipping if card flipping is in progress, and if the card is already in
     // the correct orientation.
-    if (flipping[card.id] == true || frontUp == card.frontUp) {
+    if (flipping[card.id] == true || newFrontUp == IsFrontShowing(card)) {
       return;
     }
     if (IsInOthersHand(card)) {
@@ -678,9 +683,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
 
     flipping[card.id] = true;
-    console.log('Flipping card to ' + frontUp);
+    console.log('Flipping card to front? ' + newFrontUp);
     var img = card.imageElement;
-    var newUrl = frontUp ? card.frontImage : card.backImage;
+    var newUrl = newFrontUp ? card.frontImage : card.backImage;
     var curWidth = parseInt(img.css("width"));
     var curHeight = parseInt(img.css("height"));
     var curLeft = parseInt(card.element.offset().left);
@@ -692,7 +697,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       card.element.animate({left: curLeft}, FLIP_ANIMATION_MS/2);
     });
     setTimeout(function() {delete flipping[card.id]}, FLIP_ANIMATION_MS)
-    card.frontUp = frontUp;
+    card.frontUp = newFrontUp;
   }
 
   // If either newTop or newLeft is null, does not animate in that dimension
@@ -746,10 +751,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var domId = CardInstanceIdToDomId(cardInstanceId);
       var card = allCards[domId];
       var diff = differences[cardInstanceId];
-      // if (diff !== undefined) {
-      //   console.log("Diff:");
-      //   console.log(diff);
-      // }
+      if (diff !== undefined) {
+        console.log("Diff:");
+        console.log(diff);
+      }
      
       // If this user is dragging or otherwise interacting this card, we won't
       // move or modify it.  Note: this means it will appear as if this user
@@ -794,14 +799,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function UpdateBoardLoop() {
-    console.log("Requesting latest");
+    // console.log("Requesting latest");
     $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
-      console.log("Got latest, updating");
+      // console.log("Got latest, updating");
       UpdateBoard(board);
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  // UpdateBoardLoop();
+  UpdateBoardLoop();
 }});
 });
 
