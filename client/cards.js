@@ -672,7 +672,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function FlipCard(card, newFrontUp) {
-    console.log(IsFrontShowing(card));
     // Prevent flipping if card flipping is in progress, and if the card is already in
     // the correct orientation.
     if (flipping[card.id] == true || newFrontUp == IsFrontShowing(card)) {
@@ -683,21 +682,28 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
 
     flipping[card.id] = true;
-    console.log('Flipping card to front? ' + newFrontUp);
     var img = card.imageElement;
     var newUrl = newFrontUp ? card.frontImage : card.backImage;
     var curWidth = parseInt(img.css("width"));
     var curHeight = parseInt(img.css("height"));
     var curLeft = parseInt(card.element.offset().left);
-    img.animate({width: 0, height: curHeight}, FLIP_ANIMATION_MS/2, function() {
-      img.attr("src", newUrl);
-      img.animate({width: curWidth, height: curHeight}, FLIP_ANIMATION_MS/2);
-    });
-    card.element.animate({left: curLeft + Math.floor(curWidth/2)}, FLIP_ANIMATION_MS/2, function() {
-      card.element.animate({left: curLeft}, FLIP_ANIMATION_MS/2);
-    });
-    setTimeout(function() {delete flipping[card.id]}, FLIP_ANIMATION_MS)
+
+    // Changes image and its width to make it looks like it's flipping over
+    var imageAnim = new AnimationSequence();
+    imageAnim.addAnimation(img, {width: 0, height: curHeight}, FLIP_ANIMATION_MS/2);
+    imageAnim.addCallback(function() {img.attr("src", newUrl)});
+    imageAnim.addAnimation(img, {width: curWidth, height: curHeight}, FLIP_ANIMATION_MS/2);
+
+    // Shifts horizontal position the element wrapping the image to make it
+    // flip over in place.
+    var elemAnim = new AnimationSequence();
+    elemAnim.addAnimation(card.element, {left: curLeft + Math.floor(curWidth/2)}, FLIP_ANIMATION_MS/2);
+    elemAnim.addAnimation(card.element, {left: curLeft}, FLIP_ANIMATION_MS/2);
+    elemAnim.addCallback(function() {delete flipping[card.id]});
     card.frontUp = newFrontUp;
+
+    imageAnim.start();
+    elemAnim.start();
   }
 
   // If either newTop or newLeft is null, does not animate in that dimension
@@ -806,7 +812,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  UpdateBoardLoop();
+  // UpdateBoardLoop();
 }});
 });
 
