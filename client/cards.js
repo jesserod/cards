@@ -14,13 +14,15 @@ var selectableContainer = null;
 // To keep track of items at the start of a shift-lasso so we can de-select
 // items en masse, and add new items to the selection en masse
 var selectedAtShiftLassoStart;
-var allCards = {};
+var allCards = {};  // DOM id => card object
 var curMouseX = 0;
 var curMouseY = 0;
 var flipping = {};
+var moving = {};
 var requestingUser = null;
 var isMousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
 var isMouseDown = false;
+var animSequences = {};  // DOM id => AnimationSequences
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -463,6 +465,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       return;
     }
     card.hand = newHand;
+    card.handElement.text(card.hand);
 
     if (!IsInAHand(card)) {
       card.handElement.hide();
@@ -476,8 +479,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }
 
     // Flip the card if necessary
-    if (IsFrontShowing(card) != card.frontUp) {
-      FlipCard(card, card.frontUp);
+    if (IsFrontShowing(card) != ShouldFrontShow(card)) {
+      // Note, we don't change the frontUp state of the card
+      FlipCard(card, ShouldFrontShow(card));
     }
   }
 
@@ -603,9 +607,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         }
       }, HOVER_LEAVE_DELAY);
     });
-    card.handElement = $("<p></p>").text(card.hand);
-    UpdateCardHand(card, card.hand);
+    card.handElement = $("<p></p>");
     card.handElement.appendTo(card.element);
+    UpdateCardHand(card, card.hand);
 
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
     return card;
@@ -618,7 +622,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     GetSelected().each(function(index, element) {
       var card = allCards[element.id];
       if (card != null) {
-        FlipCard(card, frontUp);
+        if (!IsInOthersHand(card)) {
+          FlipCard(card, frontUp);
+          card.frontUp = frontUp;
+        }
       }
     });
     UnlockCards(lockKey);
@@ -671,14 +678,21 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
   }
 
+  function ShouldFrontShow(card) {
+    return card.frontUp && !IsInOthersHand(card);
+  }
+
+  // Animates the card turning over, does NOT change the frontUp state of the
+  // card
   function FlipCard(card, newFrontUp) {
     // Prevent flipping if card flipping is in progress, and if the card is already in
     // the correct orientation.
-    if (flipping[card.id] == true || newFrontUp == IsFrontShowing(card)) {
+    if (flipping[card.id] == true) {
+      console.log("Already flipping! Aborting");
       return;
     }
-    if (IsInOthersHand(card)) {
-      return; // Prevent flipping of other people's cards
+    if (newFrontUp == IsFrontShowing(card)) {
+      console.log("Already in correct orientation=" + newFrontUp + ". Aborting");
     }
 
     flipping[card.id] = true;
@@ -694,31 +708,65 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     imageAnim.addAnimation(img, {width: 0, height: curHeight}, duration);
     imageAnim.addCallback(function() {img.attr("src", newUrl)});
     imageAnim.addAnimation(img, {width: curWidth, height: curHeight}, duration);
+    /*
+    // For debugging flip the image without animation
+    img.attr("src", newUrl);
+    img.css({width: curWidth, height: curHeight});
+    */
 
     // Shifts horizontal position the element wrapping the image to make it
     // flip over in place.
-    var elemAnim = new AnimationSequence();
+    var elemAnim = CardAnimSeq(card.id);
     elemAnim.addAnimation(card.element, {left: curLeft + Math.floor(curWidth/2)}, duration);
     elemAnim.addAnimation(card.element, {left: curLeft}, duration);
-    elemAnim.addCallback(function() {delete flipping[card.id]});
-    card.frontUp = newFrontUp;
+    elemAnim.addCallback(function() {
+      delete flipping[card.id];
+    });
 
     imageAnim.start();
     elemAnim.start();
   }
 
+  // Returns an animation sequence for the given domId and creates it if it doesn't exist
+  function ElementAnimSeq(domId) {
+    if (animSequences[domId] == null) {
+      animSequences[domId] = new AnimationSequence();
+    }
+    return animSequences[domId];
+  }
+
+  // Returns an animation sequence for the given domId and creates it if it doesn't exist
+  function CardAnimSeq(cardId) {
+    return ElementAnimSeq(CardInstanceIdToDomId(cardId));
+  }
+
   // If either newTop or newLeft is null, does not animate in that dimension
   // Callback gets called when the move animation is complete
   function MoveCard(card, newTop, newLeft, callback) {
-    if (newTop != null && newLeft != null) {
+    if (newTop != null || newLeft != null) {
+      if (moving[card.id]) {
+        console.log("Already moving card, aborting");
+        return;
+      }
+      if (newTop == null) {
+        newTop = $(card.element).offset().top;
+      }
+      if (newLeft == null) {
+        newleft = $(card.element).offset().left;
+      }
+      moving[card.id] = true;
       var newOffset = {};
       if (newTop != null) { newOffset.top = newTop; }
       if (newLeft != null) { newOffset.left = newLeft; }
-      var opts = {duration: MOVE_ANIMATION_MS};
+      var animSeq = CardAnimSeq(card.id);
+      animSeq.addAnimation(card.element, newOffset, MOVE_ANIMATION_MS);
       if (callback != null) {
-        opts.complete = callback;
+        animSeq.addCallback(callback);
       }
-      card.element.animate(newOffset, opts);
+      animSeq.addCallback(function() {delete moving[card.id];});
+      animSeq.start();
+    } else {
+      console.log("No need to move... already in the right spot");
     }
   }
 
@@ -748,6 +796,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function UpdateBoard(boardFromServer) {
+    if (flipping.length > 0 || moving.length > 0) {
+      console.log("Ignoring update because we are in the middle of flipping/moving");
+    }
     // console.log("Getting board update");
     var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
     if (differences === undefined) {
@@ -771,17 +822,25 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         console.log("Skipping update because card is locked");
         continue;
       }
-      if (diff.top !== undefined || diff.left !== undefined) {
-        MoveCard(card, diff.top, diff.left);
-      }
       if (diff.zIndex !== undefined) {
         UpdateZIndex(card, diff.zIndex);
       }
       if (diff.frontUp !== undefined) {
-        FlipCard(card, diff.frontUp);
+        card.frontUp = diff.frontUp;
       }
+      // Note: UpdateCardHand calls FlipCard when necesary based on
+      // the current frontUp.  Thus, if the hand has changed, we don't need
+      // to call FlipCard explicitly here, but if the hand hasn't changed we do.
       if (diff.hand !== undefined) {
         UpdateCardHand(card, diff.hand);
+      } else if (diff.frontUp !== undefined) {
+        FlipCard(card, diff.frontUp);
+      }
+
+      // Note: We must move the card *after* the flipping to avoid
+      // a mangled animation.
+      if (diff.top !== undefined || diff.left !== undefined) {
+        MoveCard(card, diff.top, diff.left);
       }
     } 
   }
@@ -813,7 +872,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     }});
     setTimeout(function(){UpdateBoardLoop();}, UPDATE_LOOP_MS);
   }
-  // UpdateBoardLoop();
+  UpdateBoardLoop();
 }});
 });
 
