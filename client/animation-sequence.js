@@ -41,7 +41,6 @@ function AnimationSequence() {
   this.start = function() {
     if (!this._state.started) {
       var s = this._state; // To avoid "this" inside the callback
-      this.addCallback(function() { s.started = false; });
       this._state.started = true;
       this._callNext(this);
     }
@@ -52,7 +51,7 @@ function AnimationSequence() {
    */
   this._callNext = function(q) {
     // While loop to handle back-to-back callback functions in the queue
-    while (q._state.started && q.functionsToCall.length > 0) {
+    while (q.functionsToCall.length > 0) {
       var f = q.functionsToCall.shift();
       f.fn();
       // We don't have back-to-back callbacks, so we can rely on the animate
@@ -60,6 +59,12 @@ function AnimationSequence() {
       if (f.type == "animation") {
         break;
       }
+    }
+
+    // Whenever the queue runs out of things to do, then
+    // we are no longer running and require an additional start().
+    if (q.functionsToCall.length == 0) {
+      q._state.started = false;
     }
   }
 }
