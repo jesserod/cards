@@ -5,6 +5,7 @@
  */
 function AnimationSequence() {
   this.functionsToCall = [];
+  this._state = {};
 
   /**
    * Adds an animation to the queue.  This method can be called even after the
@@ -38,9 +39,10 @@ function AnimationSequence() {
    * currently still running.
    */
   this.start = function() {
-    if (!this._started) {
-      this.addCallback(function() { this._started = false; });
-      this._started = true;
+    if (!this._state.started) {
+      var s = this._state; // To avoid "this" inside the callback
+      this.addCallback(function() { s.started = false; });
+      this._state.started = true;
       this._callNext(this);
     }
   }
@@ -50,7 +52,7 @@ function AnimationSequence() {
    */
   this._callNext = function(q) {
     // While loop to handle back-to-back callback functions in the queue
-    while (q._started && q.functionsToCall.length > 0) {
+    while (q._state.started && q.functionsToCall.length > 0) {
       var f = q.functionsToCall.shift();
       f.fn();
       // We don't have back-to-back callbacks, so we can rely on the animate
