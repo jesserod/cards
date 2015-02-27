@@ -478,11 +478,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       card.element.removeClass("inHand");
     }
 
-    // Flip the card if necessary
-    if (IsFrontShowing(card) != ShouldFrontShow(card)) {
-      // Note, we don't change the frontUp state of the card
-      FlipCard(card, ShouldFrontShow(card));
-    }
+    FlipCardIfNecessary(card);
   }
 
 
@@ -623,8 +619,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = allCards[element.id];
       if (card != null) {
         if (!IsInOthersHand(card)) {
-          FlipCard(card, frontUp);
           card.frontUp = frontUp;
+          FlipCardIfNecessary(card);
         }
       }
     });
@@ -671,8 +667,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var debug = false;
     if (debug) {
       console.log("Sending board update:");
-        console.log(GetCurrentBoard());
-      }
+      console.log(GetCurrentBoard());
+    }
     $.post("/updateboard/" + BOARD_ID, GetCurrentBoard(), function() {
         if (debug) { console.log("Sending success"); };
     });
@@ -682,22 +678,25 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return card.frontUp && !IsInOthersHand(card);
   }
 
-  // Animates the card turning over, does NOT change the frontUp state of the
-  // card
-  function FlipCard(card, newFrontUp) {
+  // If the card is not showing the correct face based on the current
+  // card.frontUp value, then this animates the flipping to the correct side.
+  function FlipCardIfNecessary(card) {
     // Prevent flipping if card flipping is in progress, and if the card is already in
     // the correct orientation.
     if (flipping[card.id] == true) {
       console.log("Already flipping! Aborting");
       return;
     }
-    if (newFrontUp == IsFrontShowing(card)) {
-      console.log("Already in correct orientation=" + newFrontUp + ". Aborting");
+
+    var shouldUserSeeFront = ShouldFrontShow(card);
+    // Don't do anything if orientation is already correct
+    if (IsFrontShowing(card) == shouldUserSeeFront) {
+      return;
     }
 
     flipping[card.id] = true;
     var img = card.imageElement;
-    var newUrl = newFrontUp ? card.frontImage : card.backImage;
+    var newUrl = shouldUserSeeFront ? card.frontImage : card.backImage;
     var curWidth = parseInt(img.css("width"));
     var curHeight = parseInt(img.css("height"));
     var curLeft = parseInt(card.element.offset().left);
@@ -708,11 +707,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     imageAnim.addAnimation(img, {width: 0, height: curHeight}, duration);
     imageAnim.addCallback(function() {img.attr("src", newUrl)});
     imageAnim.addAnimation(img, {width: curWidth, height: curHeight}, duration);
-    /*
-    // For debugging flip the image without animation
-    img.attr("src", newUrl);
-    img.css({width: curWidth, height: curHeight});
-    */
 
     // Shifts horizontal position the element wrapping the image to make it
     // flip over in place.
@@ -819,7 +813,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // overrode changes already made (eg if it's a long drag... it cause a
       // very delayed override of the changes)
       if (IsCardSelectLocked(card)) {
-        console.log("Skipping update because card is locked");
+        console.log("Skipping update because card is locked via human interaction");
         continue;
       }
       if (diff.zIndex !== undefined) {
@@ -828,13 +822,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       if (diff.frontUp !== undefined) {
         card.frontUp = diff.frontUp;
       }
-      // Note: UpdateCardHand calls FlipCard when necesary based on
-      // the current frontUp.  Thus, if the hand has changed, we don't need
-      // to call FlipCard explicitly here, but if the hand hasn't changed we do.
+
       if (diff.hand !== undefined) {
         UpdateCardHand(card, diff.hand);
       } else if (diff.frontUp !== undefined) {
-        FlipCard(card, diff.frontUp);
+        // UpdateCardHand flips card on its own, but if it's not called
+        // we must flip it here.
+        FlipCardIfNecessary(card);
       }
 
       // Note: We must move the card *after* the flipping to avoid
