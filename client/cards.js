@@ -688,17 +688,18 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     var curHeight = parseInt(img.css("height"));
     var curLeft = parseInt(card.element.offset().left);
 
+    var duration = FLIP_ANIMATION_MS/2;
     // Changes image and its width to make it looks like it's flipping over
     var imageAnim = new AnimationSequence();
-    imageAnim.addAnimation(img, {width: 0, height: curHeight}, FLIP_ANIMATION_MS/2);
+    imageAnim.addAnimation(img, {width: 0, height: curHeight}, duration);
     imageAnim.addCallback(function() {img.attr("src", newUrl)});
-    imageAnim.addAnimation(img, {width: curWidth, height: curHeight}, FLIP_ANIMATION_MS/2);
+    imageAnim.addAnimation(img, {width: curWidth, height: curHeight}, duration);
 
     // Shifts horizontal position the element wrapping the image to make it
     // flip over in place.
     var elemAnim = new AnimationSequence();
-    elemAnim.addAnimation(card.element, {left: curLeft + Math.floor(curWidth/2)}, FLIP_ANIMATION_MS/2);
-    elemAnim.addAnimation(card.element, {left: curLeft}, FLIP_ANIMATION_MS/2);
+    elemAnim.addAnimation(card.element, {left: curLeft + Math.floor(curWidth/2)}, duration);
+    elemAnim.addAnimation(card.element, {left: curLeft}, duration);
     elemAnim.addCallback(function() {delete flipping[card.id]});
     card.frontUp = newFrontUp;
 
