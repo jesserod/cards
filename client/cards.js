@@ -1,7 +1,7 @@
 // Constants
 var BOARD_ID = 1;
 var MOVE_ANIMATION_MS = 100;
-var FLIP_ANIMATION_MS = 200;
+var FLIP_ANIMATION_MS = 160;
 var UPDATE_LOOP_MS = 500;
 var HOVER_ENTER_DELAY = 600;
 var HOVER_LEAVE_DELAY = 100;
@@ -70,6 +70,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
 
     allCards[domId] = clientCard;
+
+    clientCard.element.dblclick(function() {
+      var card = allCards[this.id];
+      if (!IsInOthersHand(card)) {
+        card.frontUp = !card.frontUp;
+        FlipSelectedCards(card.frontUp);
+      }
+    });
   }
   var draggable = $(".draggable");
 
