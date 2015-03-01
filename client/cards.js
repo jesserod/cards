@@ -17,8 +17,8 @@ var selectedAtShiftLassoStart;
 var allCards = {};  // DOM id => card object
 var curMouseX = 0;
 var curMouseY = 0;
-var flipping = {};
-var moving = {};
+var flipping = {}; // Card ID (not DOM id) => boolean whether flipping is in progress.
+var moving = {}; // Card ID (not DOM id) => boolean whether moving of the card is in progress
 var requestingUser = null;
 var isMousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
 var isMouseDown = false;
@@ -820,7 +820,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = allCards[domId];
       var diff = differences[cardInstanceId];
       if (diff !== undefined) {
-        console.log("Diff:");
+        console.log("Diff for card " + cardInstanceId + ":");
         console.log(diff);
       }
      
@@ -828,7 +828,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // move or modify it.  Note: this means it will appear as if this user
       // overrode changes already made (eg if it's a long drag... it cause a
       // very delayed override of the changes)
-      if (IsCardSelectLocked(card)) {
+      if (IsCardSelectLocked(card) || flipping[card.id] || moving[card.id]) {
         console.log("Skipping update because card is locked via human interaction");
         continue;
       }
