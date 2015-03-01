@@ -44,6 +44,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   selectableContainer = $(".selectable-container");
 
+  var is_touch_device = 'ontouchstart' in document.documentElement;
+
   // Initialize DOM
   // cardInstanceId: Which card on the board.  Distinct from the ID of the card itself...
   // Maybe the ID for the card itself should be card UID
@@ -71,21 +73,27 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     allCards[domId] = clientCard;
 
-    // This works for double clicks and double-taps on touch pads
-    $(clientCard.element).doubletap(
-        /** doubletap-dblclick callback */
-        function(event) {
-          var card = allCards[event.currentTarget.id];
-          if (!IsInOthersHand(card)) {
-            card.frontUp = !card.frontUp;
-            FlipSelectedCards(card.frontUp);
-          }
-        },
-        /** touch-click callback (touch) */
-        function(event){ /* Do nothing, for now */ },
-        /** doubletap-dblclick delay (default is 500 ms) */
-        300
-    );
+    var doubleClickFn = function(event) {
+      var card = allCards[event.currentTarget.id];
+      if (!IsInOthersHand(card)) {
+        card.frontUp = !card.frontUp;
+        console.log("Flip because double!");
+        FlipSelectedCards(card.frontUp);
+      }
+    };
+
+    if (is_touch_device) {
+      $(clientCard.element).doubletap(
+          /** doubletap-dblclick callback */
+          doubleClickFn,
+          /** touch-click callback (touch) */
+          function(event){ /* Do nothing, for now */ },
+          /** doubletap-dblclick delay (default is 500 ms) */
+          400
+      );
+    } else {
+      $(clientCard.element).dblclick(doubleClickFn);
+    }
 }
   var draggable = $(".draggable");
 
