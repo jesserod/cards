@@ -23,7 +23,10 @@ var requestingUser = null;
 var isMousingOverCard = {}; // Which face-up cards are being moused over (card.id => true)
 var isMouseDown = false;
 var animSequences = {};  // DOM id => AnimationSequences
+// For debugging: an ID for our request to the server for its latest view of the board
 var getServerBoardRequestId = 0;
+ // Number of requests we have sent to the server to tell it what our view of the board is
+ // that are currently not yet finished
 var numUpdatesInProgress = 0;
 
 $(document).ready(function() {
@@ -79,7 +82,6 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = allCards[event.currentTarget.id];
       if (!IsInOthersHand(card)) {
         card.frontUp = !card.frontUp;
-        console.log("Flip because double!");
         FlipSelectedCards(card.frontUp);
       }
     };
@@ -690,14 +692,13 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function SendBoardUpdate() {
-    var debug = true;
+    var debug = false;
     if (debug) {
-      console.log("Sending board update:");
-      // console.log(GetCurrentBoard());
+      console.log("Sending board update");
     }
     numUpdatesInProgress++;
     $.post("/updateboard/" + BOARD_ID, GetCurrentBoard(), function() {
-        if (debug) { console.log("Sending success"); };
+      if (debug) { console.log("Sending success"); };
       numUpdatesInProgress--;
     });
   }
@@ -887,21 +888,23 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function GetLatestServerBoardLoop() {
+    // Only make a request for the server's latest board when
+    // we have no concurrent requests 
     if (numUpdatesInProgress == 0) {
       getServerBoardRequestId++;
       var localCount = getServerBoardRequestId;
-      console.log("[GetFromServer](" + localCount + ") Started");
+      // console.log("[GetFromServer](" + localCount + ") Started");
       $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
-        console.log("[GetFromServer](" + localCount + ") Finished");
-        if (numUpdatesInProgress > 0) {
-          console.log("Ignoring board from server bc sending my updates isn't done yet: " + numUpdatesInProgress);
-        } else {
-          console.log("Syncing to server");
+        // console.log("[GetFromServer](" + localCount + ") Finished");
+
+        // Don't perform any updates if we have put in an update request and it
+        // has not yet finished.  Note this can happen if we start a request
+        // for the latest board, then we start an update request, then the
+        // request for the latest board finishes.
+        if (numUpdatesInProgress == 0) {
           SyncBoard(board);
         }
       }});
-    } else {
-      console.log("Not getting from server... waiting for my updates to finish"); 
     }
     setTimeout(function(){ GetLatestServerBoardLoop(); }, UPDATE_LOOP_MS);
   }
