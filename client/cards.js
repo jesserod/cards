@@ -71,14 +71,22 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     allCards[domId] = clientCard;
 
-    clientCard.element.dblclick(function() {
-      var card = allCards[this.id];
-      if (!IsInOthersHand(card)) {
-        card.frontUp = !card.frontUp;
-        FlipSelectedCards(card.frontUp);
-      }
-    });
-  }
+    // This works for double clicks and double-taps on touch pads
+    $(clientCard.element).doubletap(
+        /** doubletap-dblclick callback */
+        function(event) {
+          var card = allCards[event.currentTarget.id];
+          if (!IsInOthersHand(card)) {
+            card.frontUp = !card.frontUp;
+            FlipSelectedCards(card.frontUp);
+          }
+        },
+        /** touch-click callback (touch) */
+        function(event){ /* Do nothing, for now */ },
+        /** doubletap-dblclick delay (default is 500 ms) */
+        300
+    );
+}
   var draggable = $(".draggable");
 
   // Initialize handlers etc
