@@ -267,6 +267,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     } else if (c == "f") {
       FanCards(GetHandCards(requestingUser));
       console.log("Fan");
+    } else if (c == "s") {
+      ShuffleCards(GetSelected());
+      console.log("Shuffle");
     } else {
       validKey = false;
     }
@@ -356,10 +359,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function GroupCards(callback) {
     var selected = GetSelected();
-    var origPos = selected.toArray().map(function(jqCard) {
-      var c = $(jqCard);
-      return {top: c.offset().top, left: c.offset().left, zIndex: c.zIndex()};
-    });
+    var origPos = GetPositions(selected);
     var offsetPerGroup = 2;
     var cardsPerGroup = 8;
     var newPos = util.GroupCardPositions(origPos, offsetPerGroup, cardsPerGroup);
@@ -376,7 +376,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         UnlockCards(lockKey);
         SendBoardUpdate();
         if (callback) {
-          callback();
+          callback($(jqCards));
         }
       }
     }
@@ -386,6 +386,50 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // board update, thus we use a callback.
       MoveCard(allCards[jqCards[i].id], newPos[i].top, newPos[i].left, finishedMovingAllCards);
     }
+  }
+
+  function GetPositions(jqCards) {
+    return jqCards.toArray().map(function(jqCard) {
+      var c = $(jqCard);
+      return {top: c.offset().top, left: c.offset().left, zIndex: c.zIndex()};
+    });
+  }
+
+  /**
+   * Shuffles cards by (1) randomizing their z-indices, (2) grouping them
+   * together, (3) spreading them out to random nearby locations, (4) moving
+   * back to their grouped locations.
+   */
+  function ShuffleCards(jqCards) {
+    var lockKey = LockCards("shuffling");
+    var jqCards = GetSelected();
+    // Shuffle z-index
+    var newZIndices = GetPositions(jqCards).map(function(p) { return p.zIndex; }).shuffle();
+    for (var i = 0; i < jqCards.length; ++i) {
+      UpdateZIndex(allCards[jqCards[i].id], newZIndices[i]);
+    }
+    GroupCards(function(groupedJqCards) {
+      console.log("Done grouping, now spreading");
+      var groupedPos = GetPositions(groupedJqCards);
+      SpreadCardsRandomly(groupedJqCards, function(spreadAndShuffledJqCards) {
+        console.log("Done spreading, now moving back")
+        MoveAllCards(spreadAndShuffledJqCards, groupedPos, function(finalJqCards) {
+          console.log("Done with moving back to shuffle location! unlocking");
+          UnlockCards(lockKey);
+        });
+      });
+    });
+  }
+
+  function SpreadCardsRandomly(jqCards, callback) {
+    var pos = GetPositions(jqCards);
+    var maxDist = 100;
+
+    for (var i = 0; i < pos.length; ++i) {
+      pos[i].top += (Math.random() - 0.5) * 2 * maxDist;
+      pos[i].left += (Math.random() - 0.5) * 2 * maxDist;
+    }
+    MoveAllCards(jqCards, pos, callback);
   }
 
   /**
@@ -792,10 +836,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       if (newLeft != null) { newOffset.left = newLeft; }
       var animSeq = CardAnimSeq(card.id);
       animSeq.addAnimation(card.element, newOffset, MOVE_ANIMATION_MS);
+      animSeq.addCallback(function() {delete moving[card.id];});
       if (callback != null) {
         animSeq.addCallback(callback);
       }
-      animSeq.addCallback(function() {delete moving[card.id];});
       animSeq.start();
     } else {
       console.log("No need to move... already in the right spot");
@@ -822,6 +866,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
      $(".zoomedCard").remove();
   }
 
+  // Takes card object (not jq)
   function UpdateZIndex(cardObject, newZIndex) {
     cardObject.element.zIndex(newZIndex);
     cardObject["z-index"] = newZIndex;
