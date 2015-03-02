@@ -340,10 +340,17 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   // human interaction)
   function IsCardSelectLocked(card) {
     if (IsSelected(card.element) || IsSelecting(card.element)) {
-      for (var key in cardLock) {
-        if (cardLock[key] == true) {
-          return true;
-        }
+      if (IsAnyCardLocked()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function IsAnyCardLocked() {
+    for (var key in cardLock) {
+      if (cardLock[key] == true) {
+        return true;
       }
     }
     return false;
@@ -409,21 +416,15 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       UpdateZIndex(allCards[jqCards[i].id], newZIndices[i]);
     }
     GroupCards(function(groupedJqCards) {
-      console.log("Done grouping, now spreading");
-      var groupedPos = GetPositions(groupedJqCards);
       SpreadCardsRandomly(groupedJqCards, function(spreadAndShuffledJqCards) {
-        console.log("Done spreading, now moving back")
-        MoveAllCards(spreadAndShuffledJqCards, groupedPos, function(finalJqCards) {
-          console.log("Done with moving back to shuffle location! unlocking");
-          UnlockCards(lockKey);
-        });
+        UnlockCards(lockKey);
       });
     });
   }
 
   function SpreadCardsRandomly(jqCards, callback) {
     var pos = GetPositions(jqCards);
-    var maxDist = 100;
+    var maxDist = 40;
 
     for (var i = 0; i < pos.length; ++i) {
       pos[i].top += (Math.random() - 0.5) * 2 * maxDist;
@@ -895,7 +896,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       // move or modify it.  Note: this means it will appear as if this user
       // overrode changes already made (eg if it's a long drag... it cause a
       // very delayed override of the changes)
-      if (IsCardSelectLocked(card) || flipping[card.id] || moving[card.id]) {
+      if (IsCardSelectLocked(card) || flipping[card.id] || moving[card.id] || IsAnyCardLocked()) {
         console.log("Skipping update because card is locked via human interaction");
         continue;
       }
