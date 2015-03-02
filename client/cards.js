@@ -333,6 +333,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(element).hasClass("ui-selecting");
   }
 
+  // Returns true if this card is selected and any card locked (eg due to
+  // human interaction)
   function IsCardSelectLocked(card) {
     if (IsSelected(card.element) || IsSelecting(card.element)) {
       for (var key in cardLock) {
@@ -352,8 +354,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     return $(".zoomedCard").length > 0;
   }
 
-  function GroupCards() {
-    var lockKey = LockCards("grouping");
+  function GroupCards(callback) {
     var selected = GetSelected();
     var origPos = selected.toArray().map(function(jqCard) {
       var c = $(jqCard);
@@ -361,21 +362,29 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
     var offsetPerGroup = 2;
     var cardsPerGroup = 8;
-
     var newPos = util.GroupCardPositions(origPos, offsetPerGroup, cardsPerGroup);
+    MoveAllCards(selected, newPos, callback);
+  }
+
+  // Moves all cards, sends board update, then calls callback (if specified).
+  function MoveAllCards(jqCards, newPos, callback) {
+    var lockKey = LockCards("moving-all");
     var cardsToMove = newPos.length;
-    for (var i = 0; i < newPos.length; i++) {
-      function finishedMovingAllCards() {
-        cardsToMove--;
-        if (cardsToMove <= 0) {
-          UnlockCards(lockKey);
-          SendBoardUpdate();
+    var finishedMovingAllCards = function() {
+      cardsToMove--;
+      if (cardsToMove <= 0) {
+        UnlockCards(lockKey);
+        SendBoardUpdate();
+        if (callback) {
+          callback();
         }
       }
+    }
+    for (var i = 0; i < newPos.length; i++) {
       // Note: cards have a move animation time, so we need to wait for the
       // last card to be moved before we can unlock the cards and send the
       // board update, thus we use a callback.
-      MoveCard(allCards[selected[i].id], newPos[i].top, newPos[i].left, finishedMovingAllCards);
+      MoveCard(allCards[jqCards[i].id], newPos[i].top, newPos[i].left, finishedMovingAllCards);
     }
   }
 
