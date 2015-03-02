@@ -82,6 +82,20 @@ Array.avg = function(array){
   return array.reduce(function(total, val) {return total + val}, 0) / array.length;
 };
 
+Array.prototype.shuffle = function() {
+  var input = this;
+   
+  for (var i = input.length-1; i >=0; i--) {
+   
+      var randomIndex = Math.floor(Math.random()*(i+1)); 
+      var itemAtIndex = input[randomIndex]; 
+       
+      input[randomIndex] = input[i]; 
+      input[i] = itemAtIndex;
+  }
+  return input;
+}
+
 // Takes a list of objects each with a "top", "left" and "zIndex"
 exports.GroupCardPositions = function(pos, offsetPerGroup, cardsPerGroup) {
   if (offsetPerGroup == null) {
