@@ -129,6 +129,40 @@ exports.GroupCardPositions = function(pos, offsetPerGroup, cardsPerGroup) {
   return newPositions;
 }
 
+// Returns an object for all styles associate with the given element a
+// From http://stackoverflow.com/questions/754607/can-jquery-get-all-css-styles-associated-with-an-element
+exports.css = function(a) {
+    var sheets = document.styleSheets, o = {};
+    for (var i in sheets) {
+        var rules = sheets[i].rules || sheets[i].cssRules;
+        for (var r in rules) {
+            if (a.is(rules[r].selectorText)) {
+                o = $.extend(o, __css2json(rules[r].style), __css2json(a.attr('style')));
+            }
+        }
+    }
+    return o;
+}
+
+__css2json = function(css) {
+    var s = {};
+    if (!css) return s;
+    if (css instanceof CSSStyleDeclaration) {
+        for (var i in css) {
+            if ((css[i]).toLowerCase) {
+                s[(css[i]).toLowerCase()] = (css[css[i]]);
+            }
+        }
+    } else if (typeof css == "string") {
+        css = css.split("; ");
+        for (var i in css) {
+            var l = css[i].split(": ");
+            s[l[0].toLowerCase()] = (l[1]);
+        }
+    }
+    return s;
+}
+
 
 } // End of exports
 )(typeof exports === 'undefined'? this['util']={}: exports);
