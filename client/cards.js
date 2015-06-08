@@ -2,6 +2,7 @@
 var BOARD_ID = 1;
 var MOVE_ANIMATION_MS = 100;
 var FLIP_ANIMATION_MS = 160;
+//var FLIP_ANIMATION_MS = 500;
 var UPDATE_LOOP_MS = 500;
 var HOVER_ENTER_DELAY = 600;
 var HOVER_LEAVE_DELAY = 100;
@@ -28,6 +29,8 @@ var getServerBoardRequestId = 0;
  // Number of requests we have sent to the server to tell it what our view of the board is
  // that are currently not yet finished
 var numUpdatesInProgress = 0;
+var CARD_WIDTH = 10;
+var CARD_HEIGHT = 10;
 
 $(document).ready(function() {
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
@@ -98,7 +101,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     } else {
       $(clientCard.element).dblclick(doubleClickFn);
     }
-}
+  }
   var draggable = $(".draggable");
 
   // Initialize handlers etc
@@ -281,6 +284,21 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   $(document).on('keyup keydown', function(e) {shiftPressed = e.shiftKey});
 
+  // Stop all animations, and set card to correct spot
+  function SetCardToCorrectState(card) {
+    delete moving[card.id]
+    delete flipping[card.id]
+    CardAnimSeq(card.id).removeQueuedActions();
+    card.imageElement.clearQueue();
+    card.imageElement.stop();
+    card.element.clearQueue();
+    card.element.stop();
+    UpdateZIndex(card, card.zIndex);
+    // card.element.offset({left: card.left, top: card.top});
+    UpdateCardsInPlay($(card.element), true); // true -> no animation
+    SetCorrectCardImage(card);
+  }
+
   /** Container is a .selectable container, elementsToSelect should be in it */
   function SelectSelectableElement(container, elementsToSelect)
   {
@@ -345,6 +363,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       }
     }
     return false;
+  }
+
+  function IsSafeToChangeProgrammatically(card) {
+    return !(IsCardSelectLocked(card) || flipping[card.id] || moving[card.id] || IsAnyCardLocked());
   }
 
   function IsAnyCardLocked() {
@@ -510,6 +532,10 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
    *         otherwise it occurs starting just to the right of the given anchor element.
    */
   function FanCards(cards, anchor) {
+    if (cards.length == 0) {
+      console.log("No cards in hand to fan");
+      return;
+    }
     var lockKey = LockCards("fanning");
     var cards = SortByLeft(cards);
     if (anchor == null) {
@@ -542,7 +568,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     BringToFront(cards, $(".card"));
   }
 
-  function UpdateCardHand(card, newHand) {
+  // If noAnim, then do not animate (just set image)
+  function UpdateCardHand(card, newHand, noAnim) {
     if (card == null) {
       return;
     }
@@ -560,11 +587,14 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       card.element.removeClass("inHand");
     }
 
-    FlipCardIfNecessary(card);
+    if (noAnim) {
+      SetCorrectCardImage(card);
+    } else {
+      FlipCardIfNecessary(card);
+    }
   }
 
-
-  function UpdateCardsInPlay(cardElements) {
+  function UpdateCardsInPlay(cardElements, noAnim) {
     if (cardElements == null) {
       cardElements = $(".card");
     }
@@ -574,9 +604,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       var card = GetCard(cardElement);
       var isInPlayableArea = $(cardElement).overlaps($("#playable-area")).hits.length > 0;
       if (IsInUsersHand(card) && isInPlayableArea && card.hand === requestingUser) {
-        UpdateCardHand(card, null);
+        UpdateCardHand(card, null, noAnim);
       } else if (!IsInAHand(card) && !isInPlayableArea && card.hand == null) {
-        UpdateCardHand(card, requestingUser);
+        UpdateCardHand(card, requestingUser, noAnim);
       }
     });
   }
@@ -653,6 +683,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         .addClass("draggable card");
     card.imageElement = $("<img src='" + imageUrl + "'/>");
     card.imageElement.appendTo(card.element);
+    // When cards are created, hold on to CSS width and height
+    CARD_WIDTH = util.css(card.imageElement).width;
+    CARD_HEIGHT = util.css(card.imageElement).height;
     card.imageElement.hoverIntent({
         sensitivity: 3, // number = sensitivity threshold (must be 1 or higher)
         interval: HOVER_ENTER_DELAY, // number = milliseconds hover before trigging onMouseOver (ie polling interval)
@@ -687,7 +720,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     });
     card.handElement = $("<p></p>");
     card.handElement.appendTo(card.element);
-    UpdateCardHand(card, card.hand);
+    UpdateCardHand(card, card.hand, true);
 
     card.element.mousedown(function(event) { UnzoomCard($(this), event); });
     return card;
@@ -759,6 +792,16 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
   function ShouldFrontShow(card) {
     return card.frontUp && !IsInOthersHand(card);
+  }
+
+  function SetCorrectCardImage(card) {
+    if (ShouldFrontShow(card)) {
+      card.imageElement.attr("src", card.frontImage);
+    } else {
+      card.imageElement.attr("src", card.backImage);
+    }
+    card.imageElement.width(CARD_WIDTH);
+    card.imageElement.height(CARD_HEIGHT);
   }
 
   // If the card is not showing the correct face based on the current
@@ -880,47 +923,57 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     // console.log("Getting board update");
     var differences = util.Diff(GetCurrentBoard(), boardFromServer.cardInstances);
     if (differences === undefined) {
-      // console.log("No diffs");
-      return;
+      // Check if any card is not facing the same way as the underlying model thinks it is
+      for (var cardInstanceId in GetCurrentBoard()) {
+        var domId = CardInstanceIdToDomId(cardInstanceId);
+        var card = allCards[domId];
+        if (IsSafeToChangeProgrammatically(card)) {
+          if (IsFrontShowing(card) != ShouldFrontShow(card)) {
+            console.log("FrontUp mismatch: " + cardInstanceId + " canChange?" + IsSafeToChangeProgrammatically(card) + " card.frontUp=" + card.frontUp + " FIXING");
+            SetCardToCorrectState(card);
+          }
+        }
+      }
+    } else {
+      for (var cardInstanceId in differences) {
+        var domId = CardInstanceIdToDomId(cardInstanceId);
+        var card = allCards[domId];
+        var diff = differences[cardInstanceId];
+        if (diff !== undefined) {
+          console.log("Diff for card " + cardInstanceId + ":");
+          console.log(diff);
+        }
+
+        // If this user is dragging or otherwise interacting this card, we won't
+        // move or modify it.  Note: this means it will appear as if this user
+        // overrode changes already made (eg if it's a long drag... it cause a
+        // very delayed override of the changes)
+        if (!IsSafeToChangeProgrammatically(card)) {
+          console.log("Skipping update because card is locked via human interaction or animation");
+          continue;
+        }
+        if (diff.zIndex !== undefined) {
+          UpdateZIndex(card, diff.zIndex);
+        }
+        if (diff.frontUp !== undefined) {
+          card.frontUp = diff.frontUp;
+        }
+
+        if (diff.hand !== undefined) {
+          UpdateCardHand(card, diff.hand);
+        } else if (diff.frontUp !== undefined) {
+          // UpdateCardHand flips card on its own, but if it's not called
+          // we must flip it here.
+          FlipCardIfNecessary(card);
+        }
+
+        // Note: We must move the card *after* the flipping to avoid
+        // a mangled animation.
+        if (diff.top !== undefined || diff.left !== undefined) {
+          MoveCard(card, diff.top, diff.left);
+        }
+      } 
     }
-    for (var cardInstanceId in differences) {
-      var domId = CardInstanceIdToDomId(cardInstanceId);
-      var card = allCards[domId];
-      var diff = differences[cardInstanceId];
-      if (diff !== undefined) {
-        console.log("Diff for card " + cardInstanceId + ":");
-        console.log(diff);
-      }
-     
-      // If this user is dragging or otherwise interacting this card, we won't
-      // move or modify it.  Note: this means it will appear as if this user
-      // overrode changes already made (eg if it's a long drag... it cause a
-      // very delayed override of the changes)
-      if (IsCardSelectLocked(card) || flipping[card.id] || moving[card.id] || IsAnyCardLocked()) {
-        console.log("Skipping update because card is locked via human interaction");
-        continue;
-      }
-      if (diff.zIndex !== undefined) {
-        UpdateZIndex(card, diff.zIndex);
-      }
-      if (diff.frontUp !== undefined) {
-        card.frontUp = diff.frontUp;
-      }
-
-      if (diff.hand !== undefined) {
-        UpdateCardHand(card, diff.hand);
-      } else if (diff.frontUp !== undefined) {
-        // UpdateCardHand flips card on its own, but if it's not called
-        // we must flip it here.
-        FlipCardIfNecessary(card);
-      }
-
-      // Note: We must move the card *after* the flipping to avoid
-      // a mangled animation.
-      if (diff.top !== undefined || diff.left !== undefined) {
-        MoveCard(card, diff.top, diff.left);
-      }
-    } 
   }
 
   function GetCurrentBoard() {

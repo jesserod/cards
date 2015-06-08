@@ -67,4 +67,8 @@ function AnimationSequence() {
       q._state.started = false;
     }
   }
+
+  this.removeQueuedActions = function() {
+    this.functionsToCall.length = 0;
+  }
 }
