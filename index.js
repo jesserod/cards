@@ -8,11 +8,16 @@ var express = require('express');
 var app = express();
 var Card = require('./card');
 var Board = require('./board');
+var fs = require('fs')
 
 // Allow retriving params from post requests
 app.use( express.bodyParser() )
 // The root now serves stuff in the client dir as if it were the root
 app.use(express.static(__dirname + '/client'));
+
+// Use jade for templating and expect to find jade template files in ./views
+app.set('view engine', 'jade');
+app.set('views', './views');
 
 // Creates a new game with some dummy data
 app.get('/newboard', function (req, res) {
@@ -171,6 +176,24 @@ function getMeta(key, defaultValue, callback) {
     }
   });
 }
+
+app.get('/showimagedir', function(req, res) {
+  // files = res.json(fs.readdirSync("client/new_deck_images"));
+
+  files = ['foo', 'bar']
+/*
+  res.format({
+    'text/html': function(){
+      res.send('<p>hey</p>');
+    }
+  });
+*/
+  res.render('new_deck', { images: files });
+});
+
+app.post('/new_deck', function(req, res) {
+  res.send(req.body);
+});
 
 var server = app.listen(process.env.port || 3131, function () {
   var host = server.address().address

@@ -1,0 +1,14 @@
+html
+  body
+    form(action="../new_deck", method="post")
+      table
+        tr
+          th image
+          th number
+        each image, i in images
+          tr
+            td!= image
+            td
+              - var name = image
+              input(type="text", name=name, value="1")
+      input(type="submit", value="Submit")
