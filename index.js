@@ -56,9 +56,9 @@ app.get('/initdb', function(req, res) {
   var bulk = db.cards.initializeOrderedBulkOp();
   bulk.find({}).remove()
   // Insert playing cards into DB
-  var collection = "playing";
+  var cardCollection = "playing";
   for (var i = 0; i < 54; i++) {
-    bulk.insert(Card.create(i, collection, "img/" + collection, (i+1) + ".png", "b2fv.png"));
+    bulk.insert(Card.create(i, cardCollection, "img/" + cardCollection, (i+1) + ".png", "b2fv.png"));
   }
   bulk.execute(function(err, results) {
     if (!err) {
