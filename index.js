@@ -178,36 +178,24 @@ function getMeta(key, defaultValue, callback) {
 }
 
 app.get('/showimagedir', function(req, res) {
-  files = fs.readdirSync("client/new_deck_images");
+  dir_in_client = "new_deck_images/tiny";
+  ERROR = "ERROR: Could not find files, did you upload files and run script/shrink-images.sh?"
+  try {
+    files = fs.readdirSync("client/" + dir_in_client);
+  } catch (e) {
+    res.send(ERROR);
+  }
   images = []
   for (var i = 0; i < files.length; ++i) {
     if (files[i].toLowerCase().match(/.*\.(jpg|png|jpeg)/)) {
       images.push(files[i]);
     }
   }
-  res.render('new_deck', { images: images });
-
-  // To print contents and render as json...
-  // files = res.json(fs.readdirSync("client/new_deck_images"));
-  // files = ['foo', 'bar']
-  /*
-  files = [
-    ".gitignore",
-    "001(1).jpg",
-    "001(2).jpg",
-    "001(3).jpg",
-    "001.jpg",
-    "001.png",
-    "Test.zip"
-  ]
-  */
-/*
-  res.format({
-    'text/html': function(){
-      res.send('<p>hey</p>');
-    }
-  });
-*/
+  if (images.length > 0) {
+    res.render('new_deck', { dir: dir_in_client, images: images });
+  } else {
+    res.send(ERROR);
+  }
 });
 
 app.post('/new_deck', function(req, res) {

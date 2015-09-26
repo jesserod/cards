@@ -10,7 +10,7 @@ html
           tr
             td!= image
             td
-              img(src='new_deck_images/#{image}')
+              img(src='#{dir}/#{image}')
             td
               - var name = image
               input(type="text", name=name, value="1")
