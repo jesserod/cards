@@ -178,9 +178,29 @@ function getMeta(key, defaultValue, callback) {
 }
 
 app.get('/showimagedir', function(req, res) {
-  // files = res.json(fs.readdirSync("client/new_deck_images"));
+  files = fs.readdirSync("client/new_deck_images");
+  images = []
+  for (var i = 0; i < files.length; ++i) {
+    if (files[i].toLowerCase().match(/.*\.(jpg|png|jpeg)/)) {
+      images.push(files[i]);
+    }
+  }
+  res.render('new_deck', { images: images });
 
-  files = ['foo', 'bar']
+  // To print contents and render as json...
+  // files = res.json(fs.readdirSync("client/new_deck_images"));
+  // files = ['foo', 'bar']
+  /*
+  files = [
+    ".gitignore",
+    "001(1).jpg",
+    "001(2).jpg",
+    "001(3).jpg",
+    "001.jpg",
+    "001.png",
+    "Test.zip"
+  ]
+  */
 /*
   res.format({
     'text/html': function(){
@@ -188,7 +208,6 @@ app.get('/showimagedir', function(req, res) {
     }
   });
 */
-  res.render('new_deck', { images: files });
 });
 
 app.post('/new_deck', function(req, res) {

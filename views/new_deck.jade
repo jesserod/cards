@@ -3,11 +3,14 @@ html
     form(action="../new_deck", method="post")
       table
         tr
+          th file
           th image
-          th number
+          th num copies
         each image, i in images
           tr
             td!= image
+            td
+              img(src='new_deck_images/#{image}')
             td
               - var name = image
               input(type="text", name=name, value="1")
