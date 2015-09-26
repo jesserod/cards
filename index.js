@@ -187,7 +187,7 @@ app.get('/showimagedir', function(req, res) {
   }
   images = []
   for (var i = 0; i < files.length; ++i) {
-    if (files[i].toLowerCase().match(/.*\.(jpg|png|jpeg)/)) {
+    if (files[i].toLowerCase().match(/.*\.(jpg|png|jpeg|gif)/)) {
       images.push(files[i]);
     }
   }
