@@ -1,5 +1,5 @@
 // Constants
-var BOARD_ID = 1;
+var BOARD_ID = -1;
 var MOVE_ANIMATION_MS = 100;
 var FLIP_ANIMATION_MS = 160;
 //var FLIP_ANIMATION_MS = 500;
@@ -33,17 +33,34 @@ var CARD_WIDTH = 10;
 var CARD_HEIGHT = 10;
 
 $(document).ready(function() {
+
+// Get the user & board from the URL params
+requestingUser = null;
+var pathParts = ($(document)[0].URL).split("?");
+var msg = "Please specify a board and user with ?b=BOARD_NUM&u=USERNAME"
+if (pathParts.length != 2) {
+  $("body").text(msg);
+  return;
+}
+params = pathParts[1].split("&");
+for (var i in params) {
+  var match = /^([ub])=(.+)/.exec(params[i]);
+  if (match) {
+    if (match[1] == 'b') {
+      BOARD_ID = parseInt(match[2]);
+      console.log("Setting BOARD ID " + BOARD_ID);
+    }
+    if (match[1] == 'u') {
+      requestingUser = match[2];
+    }
+  }
+}
+if (requestingUser == null || requestingUser == "" || BOARD_ID < 1 || isNaN(BOARD_ID)) {
+  $("body").text(msg);
+  return;
+}
+
 $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
-  // Get the user from the URL params, assumes only one parameter called u
-  requestingUser = null;
-  var pathParts = ($(document)[0].URL).split("?u=");
-  if (pathParts.length == 2) {
-    requestingUser = pathParts[1];
-  }
-  if (requestingUser == null) {
-    $("body").text("Please specify a user with ?u=USERNAME");
-    return;
-  }
 
   // Keep track of when the mouse is down
   $("body").mousedown(function(event) {isMouseDown = true;});
@@ -53,6 +70,11 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   selectableContainer = $(".selectable-container");
 
   var is_touch_device = 'ontouchstart' in document.documentElement;
+
+  if (!board) {
+    $("body").text("No board " + BOARD_ID + " was found");
+    return;
+  }
 
   // Initialize DOM
   // cardInstanceId: Which card on the board.  Distinct from the ID of the card itself...
