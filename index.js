@@ -273,7 +273,14 @@ app.post('/new_deck', function(req, res) {
       }
     }
   }
-  res.json(output);
+  var outDir = "client/img/" + req.body.collection;
+  MSG = "Please run the following:" +
+    "\n\nmkdir -p " + outDir +
+    "\ncp client/new_deck_images/shrink/* " + outDir +
+    "\n\n\nThen paste this <TODO> and run <TODO>";
+
+  res.set('Content-Type', 'text/plain');
+  res.send(MSG + "\n\n" + JSON.stringify(output, null /* all fields */, 2 /* indents 2 spaces */));
 });
 
 var server = app.listen(process.env.port || 3131, function () {
