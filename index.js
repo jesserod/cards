@@ -20,7 +20,7 @@ app.set('view engine', 'jade');
 app.set('views', './views');
 
 // Creates a new game with some dummy data
-app.get('/newboard', function (req, res) {
+app.get('/newboard/:cardCollection', function (req, res) {
   var key = "board.latestId";
   getMeta(key, 0, function(boardId) {
     if (!boardId) {
@@ -31,9 +31,12 @@ app.get('/newboard', function (req, res) {
     db.meta.save(boardId);
     var board = Board.create(boardId.value);
 
-    db.cards.find({collection: "playingcards"}, function(err, cards) {
+    res.set('Content-Type', 'text/plain');
+    db.cards.find({collection: req.params.cardCollection}, function(err, cards) {
       if (err) {
-        res.send(err);
+        res.send("Error looking up cards in collection: " + err);
+      } else if (cards.length == 0) {
+        res.send("Could not find cards for collection: " + req.params.cardCollection);
       } else {
         // console.log(JSON.stringify(cards));
         for (var i = 0; i < cards.length; ++i) {
@@ -41,7 +44,7 @@ app.get('/newboard', function (req, res) {
           board.addCard(cards[i], 200, 200, true);
         }
         db.boards.insert(board);
-        res.send("" + board.id);
+        res.send("Created new board: " + "\n\n" + prettyJson(board));
       }
     });
   });
@@ -52,19 +55,28 @@ app.get('/newboard', function (req, res) {
  * (their IDs, the images used for each card, etc).
  */
 app.get('/initdb', function(req, res) {
-  res.send("Initializing DB");
+  res.send("Initializing DB (clearing everything). Visit /loadcollection/<name>" +
+    " to add cards to the database, then use /newboard/<name> to create a new" +
+    " board with that collection");
   var bulk = db.cards.initializeOrderedBulkOp();
   bulk.find({}).remove()
-  // Insert playing cards into DB
-  var cardCollection = "playingcards";
-  for (var i = 0; i < 54; i++) {
-    bulk.insert(Card.create(i, cardCollection, "img/" + cardCollection, (i+1) + ".png", "b2fv.png"));
+});
+
+// Load a given collection of cards into the database (doesn't create a board)
+app.get('/loadcollection/:name', function(req, res) {
+  var collection = req.params.name;
+  var jsonString = fs.readFileSync("collections/" + collection + ".json");
+  var cardList = JSON.parse(jsonString);
+  var bulk = db.cards.initializeOrderedBulkOp();
+  for (var i in cardList) {
+    bulk.insert(cardList[i]); // Items assumed to be created with card.Create()
   }
+  res.set('Content-Type', 'text/plain');
   bulk.execute(function(err, results) {
     if (!err) {
-      console.log("Cards seeded");
+      res.send("Seeded cards: " + JSON.stringify(cardList, null, 2));
     } else {
-      console.log("Error seeding cards: " + err);
+      res.send("DB ERROR when seeding cards: " + err);
     }
   });
 });
@@ -275,7 +287,8 @@ app.post('/new_deck', function(req, res) {
       var cardbackFile = cardbacks[cardback];
       var collection = req.body.collection
       for (var i = 0; i < num; ++i) {
-        output.push(Card.create(cardId, collection, "img/" + collection, file, cardbackFile));
+        var base = "img/" + collection + "/";
+        output.push(Card.create(cardId, collection, base + file, base + cardbackFile));
         ++cardId;
       }
     }
@@ -287,8 +300,14 @@ app.post('/new_deck', function(req, res) {
     "\n\n\nThen paste this <TODO> and run <TODO>";
 
   res.set('Content-Type', 'text/plain');
-  res.send(MSG + "\n\n" + JSON.stringify(output, null /* all fields */, 2 /* indents 2 spaces */));
+  res.send(MSG + "\n\n" + prettyJson(output));
 });
+
+function prettyJson(obj) {
+  return JSON.stringify(obj,
+      null /* Print all fields */,
+      2 /* 2 spaces for indenting */);
+}
 
 var server = app.listen(process.env.port || 3131, function () {
   var host = server.address().address

@@ -1,10 +1,10 @@
 module.exports = {
-  create: function(id, collection, basePath, front, back) {
+  create: function(id, collection, frontImgPath, backImgPath) {
     return {
       id: id,
       collection: collection,
-      frontImage: basePath + "/" + front,
-      backImage: basePath + "/" + back,
+      frontImage: frontImgPath,
+      backImage: backImgPath,
     }
   }
 }

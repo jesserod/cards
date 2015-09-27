@@ -1,0 +1,32 @@
+[
+  {
+    "id": 0,
+    "collection": "test",
+    "frontImage": "img/test/medium-001(1).jpg",
+    "backImage": "img/test/medium-001.jpg"
+  },
+  {
+    "id": 1,
+    "collection": "test",
+    "frontImage": "img/test/medium-001(1).jpg",
+    "backImage": "img/test/medium-001.jpg"
+  },
+  {
+    "id": 2,
+    "collection": "test",
+    "frontImage": "img/test/medium-001(1).jpg",
+    "backImage": "img/test/medium-001.jpg"
+  },
+  {
+    "id": 3,
+    "collection": "test",
+    "frontImage": "img/test/medium-001(2).jpg",
+    "backImage": "img/test/medium-001.jpg"
+  },
+  {
+    "id": 4,
+    "collection": "test",
+    "frontImage": "img/test/medium-001(3).jpg",
+    "backImage": "img/test/medium-001.jpg"
+  }
+]

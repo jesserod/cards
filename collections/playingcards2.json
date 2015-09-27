@@ -1,0 +1,327 @@
+
+[
+  {
+    "id": 0,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-1.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 1,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-10.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 2,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-11.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 3,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-12.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 4,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-13.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 5,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-14.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 6,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-15.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 7,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-16.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 8,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-17.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 9,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-18.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 10,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-19.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 11,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-2.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 12,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-20.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 13,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-21.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 14,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-22.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 15,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-23.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 16,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-24.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 17,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-25.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 18,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-26.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 19,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-27.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 20,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-28.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 21,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-29.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 22,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-3.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 23,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-30.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 24,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-31.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 25,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-32.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 26,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-33.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 27,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-34.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 28,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-35.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 29,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-36.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 30,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-37.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 31,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-38.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 32,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-39.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 33,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-4.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 34,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-40.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 35,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-41.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 36,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-42.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 37,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-43.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 38,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-44.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 39,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-45.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 40,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-46.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 41,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-47.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 42,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-48.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 43,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-49.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 44,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-5.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 45,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-50.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 46,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-51.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 47,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-52.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 48,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-53.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 49,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-54.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 50,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-6.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 51,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-7.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 52,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-8.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  },
+  {
+    "id": 53,
+    "collection": "playingcards2",
+    "frontImage": "img/playingcards2/medium-9.png",
+    "backImage": "img/playingcards2/medium-b2fv.png"
+  }
+]
