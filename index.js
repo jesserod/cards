@@ -108,8 +108,14 @@ app.post('/updateboard/:id', function(req, res) {
           changes[keyPrefix + "zIndex"] = parseInt(toUpdate.zIndex);
         }
         if (toUpdate.hand != card.hand) {
-          changes[keyPrefix + "hand"] = toUpdate.hand;
-          if (changes[keyPrefix + "hand"] == "") {
+          if (toUpdate.hand != "")  {
+            // If the client is setting the hand to null or to another
+            // player's name, make the change.
+            changes[keyPrefix + "hand"] = toUpdate.hand;
+          } else if (card.hand != null && toUpdate.hand == "") {
+            // When the server says the card is owned (has a hand) and
+            // the client wants to say it doesn't have a hand, we must
+            // explicitly set it to null so it gets deleted in the update below.
             changes[keyPrefix + "hand"] = null;
           }
         }
