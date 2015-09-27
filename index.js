@@ -178,7 +178,8 @@ function getMeta(key, defaultValue, callback) {
 }
 
 app.get('/showimagedir', function(req, res) {
-  dir_in_client = "new_deck_images/tiny";
+  dir_in_client = "new_deck_images/shrink";
+  SIZE="medium";
   ERROR = "ERROR: Could not find files, did you upload files and run script/shrink-images.sh?"
   try {
     files = fs.readdirSync("client/" + dir_in_client);
@@ -187,7 +188,7 @@ app.get('/showimagedir', function(req, res) {
   }
   images = []
   for (var i = 0; i < files.length; ++i) {
-    if (files[i].toLowerCase().match(/.*\.(jpg|png|jpeg|gif)/)) {
+    if (files[i].toLowerCase().match(new RegExp("^" + SIZE + ".*\.(jpg|png|jpeg|gif)"))) {
       images.push(files[i]);
     }
   }
@@ -198,8 +199,81 @@ app.get('/showimagedir', function(req, res) {
   }
 });
 
+/*
+ * Input: {
+ *   "copies-foo.jpg": "1",
+ *   "is_cardback-foo.jpg: "default",
+ *   "is_cardback-bar.jpg: "",
+ *   "copies-bar.jpg: "", }
+ *
+ * Outputs a list of Cards with the appropriate front and back images
+ *
+ */
 app.post('/new_deck', function(req, res) {
-  res.send(req.body);
+  if (req.body.collection == undefined || !req.body.collection.match(/[A-Za-z0-9_]+/)) {
+    res.send("ERROR: MUST SET A COLLECTION NAME with only [A-Za-z0-9_] characters");
+    return;
+  }
+  props = {}
+  /* Create an intermediate variable like
+   * { "copies" : {"bar.jpg" : "1", ...}
+   *   "is_cardback" : {"foo.jpg" : "default", ...} }
+   */
+  PREFIXES = ['copies', 'which_cardback', 'is_cardback']
+  for (var i in PREFIXES) {
+    props[PREFIXES[i]] = {}
+  }
+  for (var key in req.body) {
+    for (var i in PREFIXES) {
+      var regex = new RegExp("^" + PREFIXES[i] + "-");
+      if (key.match(regex)) {
+        file = key.replace(regex, "");
+        value = req.body[key];
+        props[PREFIXES[i]][file] = value;
+        break;
+      }
+    }
+  }
+
+  cardbacks = {}
+  for (var file in props.is_cardback) {
+    var name = props.is_cardback[file].trim();
+    if (name != "" && name != undefined) {
+      cardbacks[name] = file;
+      if (!(file in props.copies)) {
+        res.send("ERROR: file '"+ file +"' not found for cardback '" + name + "'");
+      }
+    }
+  }
+
+  // Now, create the cardsk
+  var cardId = 0;
+  output = []  //  A list of card.js objects
+  for (var file in props.copies) {
+    var num = parseInt(props.copies[file]);
+    if (!isNaN(num) && num > 0) {
+      if (num > 1000) {
+        res.send("ERROR: too many copies: " + num);
+      }
+
+      var cardback = props.which_cardback[file];
+      if (cardback == undefined || cardback == "") {
+        res.send("ERROR: No cardback specified for card: " + file);
+      }
+
+      if (! (cardback in cardbacks)) {
+        res.send("ERROR: Could not find cardback '" + cardback + "' for file " + file + ". Options are: " + JSON.stringify(cardbacks));
+        return;
+      }
+      var cardbackFile = cardbacks[cardback];
+      var collection = req.body.collection
+      for (var i = 0; i < num; ++i) {
+        output.push(Card.create(cardId, collection, "img/" + collection, file, cardbackFile));
+        ++cardId;
+      }
+    }
+  }
+  res.json(output);
 });
 
 var server = app.listen(process.env.port || 3131, function () {

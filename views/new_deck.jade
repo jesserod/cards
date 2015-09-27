@@ -1,6 +1,17 @@
 html
   body
+    | INSTRUCTIONS:
+    ul
+      li
+        |Copies: the card appear in the deck (0 if the image is just a cardback).
+      li
+        |Cardback: name of the cardback (ignored if there are 0 copies of the card).
+        |Should match the name of one of the cardback names in the Is Cardback column.
+      li
+        |Is Cardback: If this image is to be a cardback, this is the name of the cardback it defines.
     form(action="../new_deck", method="post")
+      b Collection:
+      input(type="text", name="collection", value="collection_name")
       table(border="1")
         tr
           th file
@@ -9,22 +20,22 @@ html
           th cardback name
           th is cardback (name)
         each file, i in images
+          if i == 0
+            - var copies = 0
+            - var cardback = ""
+            - var is_cardback = "default"
+          else
+            - var copies = 1
+            - var cardback = "default"
+            - var is_cardback = ""
           tr
             td!= file
             td
               img(src='#{dir}/#{file}')
             td
-              if i == 0
-                - var value = 0
-              else
-                - var value = 1
-              input(type="text", name='copies-#{file}', value="#{value}", style="width:30px")
+              input(type="text", name='copies-#{file}', value="#{copies}", style="width:30px")
             td
-              input(type="text", name='which_cardback-#{file}', value="default", style="width:80px")
+              input(type="text", name='which_cardback-#{file}', value="#{cardback}", style="width:80px")
             td
-              if i == 0
-                - var value = "default"
-              else
-                - var value = ""
-              input(type="text", name='is_cardback-#{file}', value='#{value}', style="width:80px")
+              input(type="text", name='is_cardback-#{file}', value='#{is_cardback}', style="width:80px")
       input(type="submit", value="Submit")
