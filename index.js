@@ -293,11 +293,14 @@ app.post('/new_deck', function(req, res) {
       }
     }
   }
-  var outDir = "client/img/" + req.body.collection;
+  var col = req.body.collection;
+  var outDir = "client/img/" + col;
   MSG = "Please run the following:" +
-    "\n\nmkdir -p " + outDir +
-    "\ncp client/new_deck_images/shrink/* " + outDir +
-    "\n\n\nThen paste this <TODO> and run <TODO>";
+    "\n\n    mkdir -p " + outDir +
+    "\n    cp client/new_deck_images/shrink/* " + outDir +
+    "\n\n\nThen paste the JSON below into: " +
+    "\n\n    ./collections/" + col + ".json" +
+    "\n\nThen visit \n\n    /loadcollection/" + col;
 
   res.set('Content-Type', 'text/plain');
   res.send(MSG + "\n\n" + prettyJson(output));
