@@ -193,7 +193,8 @@ app.get('/showimagedir', function(req, res) {
     }
   }
   if (images.length > 0) {
-    res.render('new_deck', { dir: dir_in_client, images: images });
+    res.render('new_deck', { dir: "../" /* To remove the showimgdir in path */ + dir_in_client,
+                             images: images });
   } else {
     res.send(ERROR);
   }
