@@ -60,6 +60,12 @@ body {
   text-align: center;
 }
 
+/* Must come after .card img so these CSS rules get applied */
+.token img {
+  height: 40px;
+  width: 40px;
+}
+
 .card p {
   color: yellow;
   top: 1em;

@@ -90,6 +90,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
       "z-index": card.zIndex,
       backImage: card.card.backImage,
       frontImage: card.card.frontImage,
+      pile: card.card.pile,
+      isToken: card.card.isToken,
       frontUp: card.frontUp,
       hand: card.hand,
       user: requestingUser,
@@ -669,7 +671,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
 
     var attrKeys = ["id"];
     var cssKeys = ["z-index", "top", "left"];
-    var otherKeys = ["frontImage", "backImage", "frontUp", "cardInstanceId", "hand"];
+    var otherKeys = ["frontImage", "backImage", "frontUp", "cardInstanceId", "hand", "isToken"];
 
     var attrMap = {}
     var cssMap = {}
@@ -703,6 +705,9 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
         .attr(attrMap)
         .css(cssMap)
         .addClass("draggable card");
+    if (card.isToken) {
+      card.element.addClass("token");
+    }
     card.imageElement = $("<img src='" + imageUrl + "'/>");
     card.imageElement.appendTo(card.element);
     // When cards are created, hold on to CSS width and height
@@ -913,6 +918,7 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
   }
 
   function ZoomCard(card) {
+    var ZOOM_FACTOR = 5;
     UnzoomCard(card);
     var zoomId = card.element.attr("id") + "-zoom";
     var clone = card.element.clone(false);
@@ -922,8 +928,8 @@ $.ajax({url: "/show/boards/" + BOARD_ID, success: function(board) {
     clone.appendTo(card.element.parent());
     clone.css("z-index", parseInt(card.element.css("z-index")) + 1);
     clone.offset({top: curMouseY + 5, left: curMouseX + 5,});
-    clone.children("img").css({height: parseFloat(card.element.css("height")) * 2,
-               width: parseFloat(card.element.css("width")) * 2});
+    clone.children("img").css({height: parseFloat(card.element.css("height")) * ZOOM_FACTOR,
+               width: parseFloat(card.element.css("width")) * ZOOM_FACTOR});
     var maxCardZIndex = Array.max(GetZIndices($(".card")));
     clone.zIndex(maxCardZIndex + 1);
   }

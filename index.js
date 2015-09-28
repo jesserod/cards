@@ -38,10 +38,21 @@ app.get('/newboard/:cardCollection', function (req, res) {
       } else if (cards.length == 0) {
         res.send("Could not find cards for collection: " + req.params.cardCollection);
       } else {
+        var FIRST_PILE_PX = 200;
+        var PILE_OFFSET_PX = 50;
+        var numOffsets = 0;
+        var pileOffsets = {};
+        for (var i = 0; i < cards.length; ++i) {
+          if (!(cards[i].pile in pileOffsets)) {
+            pileOffsets[cards[i].pile] = numOffsets;
+            ++numOffsets;
+          }
+        }
         // console.log(JSON.stringify(cards));
         for (var i = 0; i < cards.length; ++i) {
           delete cards[i]._id;
-          board.addCard(cards[i], 200, 200, true);
+          var px = FIRST_PILE_PX + pileOffsets[cards[i].pile] * PILE_OFFSET_PX;
+          board.addCard(cards[i], px, px, true);
         }
         db.boards.insert(board);
         res.send("Created new board: " + "\n\n" + prettyJson(board));
@@ -238,7 +249,7 @@ app.post('/new_deck', function(req, res) {
    * { "copies" : {"bar.jpg" : "1", ...}
    *   "is_cardback" : {"foo.jpg" : "default", ...} }
    */
-  PREFIXES = ['copies', 'which_cardback', 'is_cardback']
+  PREFIXES = ['copies', 'which_cardback', 'is_cardback', 'is_token', 'pile']
   for (var i in PREFIXES) {
     props[PREFIXES[i]] = {}
   }
@@ -269,28 +280,36 @@ app.post('/new_deck', function(req, res) {
   var cardId = 0;
   output = []  //  A list of card.js objects
   for (var file in props.copies) {
-    var num = parseInt(props.copies[file]);
-    if (!isNaN(num) && num > 0) {
-      if (num > 1000) {
-        res.send("ERROR: too many copies: " + num);
-      }
+    var copies = parseInt(props.copies[file]);
+    if (isNaN(copies) || copies <= 0) {
+      continue;
+    }
+    if (copies > 1000) {
+      res.send("ERROR: too many copies: " + copies);
+    }
 
-      var cardback = props.which_cardback[file];
-      if (cardback == undefined || cardback == "") {
-        res.send("ERROR: No cardback specified for card: " + file);
-      }
+    var cardback = props.which_cardback[file];
+    if (cardback == undefined || cardback == "") {
+      res.send("ERROR: No cardback specified for card: " + file);
+    }
 
-      if (! (cardback in cardbacks)) {
-        res.send("ERROR: Could not find cardback '" + cardback + "' for file " + file + ". Options are: " + JSON.stringify(cardbacks));
-        return;
+    if (! (cardback in cardbacks)) {
+      res.send("ERROR: Could not find cardback '" + cardback + "' for file " + file + ". Options are: " + JSON.stringify(cardbacks));
+      return;
+    }
+    var cardbackFile = cardbacks[cardback];
+    var collection = req.body.collection
+    for (var i = 0; i < copies; ++i) {
+      var base = "img/" + collection + "/";
+      var card = Card.create(cardId, collection, base + file, base + cardbackFile);
+      if (file in props.is_token && props.is_token[file] != "") {
+        card.isToken = true;
       }
-      var cardbackFile = cardbacks[cardback];
-      var collection = req.body.collection
-      for (var i = 0; i < num; ++i) {
-        var base = "img/" + collection + "/";
-        output.push(Card.create(cardId, collection, base + file, base + cardbackFile));
-        ++cardId;
+      if (file in props.pile && props.pile[file] != "") {
+        card.pile = props.pile[file].trim();
       }
+      output.push(card);
+      ++cardId;
     }
   }
   var col = req.body.collection;
